@@ -3,7 +3,7 @@ import axios from 'axios'
 
 function App() {
   const [data, setData] = useState(null)
-  const API_URL = "http://127.0.0.1:8000" 
+  const API_URL = "http://web-basic-backend.onrender.com" 
 
   useEffect(() => {
     axios.get(`${API_URL}/api/ml-result`)
