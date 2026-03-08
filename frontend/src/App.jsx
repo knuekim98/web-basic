@@ -1,30 +1,29 @@
-import { useEffect, useState } from 'react'
-import axios from 'axios'
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Brain, Image, BarChart3, Settings, ChevronRight } from 'lucide-react';
+import axios from 'axios';
 
-function App() {
-  const [data, setData] = useState(null)
-  const API_URL = "http://web-basic-backend.onrender.com" 
+import LandingPage from './components/LandingPage';
+import ProjectMenu from './components/ProjectMenu';
+
+
+export default function App() {
+  const [page, setPage] = useState('landing');
+  const [isBackendReady, setIsBackendReady] = useState(false);
 
   useEffect(() => {
-    axios.get(`${API_URL}/api/ml-result`)
-      .then(response => {
-        setData(response.data)
-      })
-      .catch(error => console.error("Error fetching data:", error))
-  }, [])
+    axios.get('https://web-basic-backend.onrender.com/')
+      .then(() => setIsBackendReady(true))
+      .catch(() => console.log("Backend waking up..."));
+  }, []);
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold">ML Portfolio</h1>
-      {data ? (
-        <div className="mt-4 p-4 border rounded shadow">
-          <p><strong>모델명:</strong> {data.model_name}</p>
-          <p><strong>정확도:</strong> {data.accuracy * 100}%</p>
-        </div>
+    <main className="bg-[#0a0a0a] min-h-screen">
+      {page === 'landing' ? (
+        <LandingPage onStart={() => setPage('menu')} />
       ) : (
-        <p>loading</p>
+        <ProjectMenu isBackendReady={isBackendReady} />
       )}
-    </div>
-  )
+    </main>
+  );
 }
-export default App
