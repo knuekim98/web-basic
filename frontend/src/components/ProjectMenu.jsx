@@ -1,11 +1,11 @@
-import { Brain, Image, BarChart3, Settings, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Brain, Image, BarChart3, Settings, ChevronRight, ArrowLeft, ChessKing } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const ProjectMenu = ({ isBackendReady, onBack, onSelectProject }) => {
   const projects = [
     { id: 'mnist', title: 'MNIST DIGIT RECOGNITION', icon: <Brain size={20} /> },
+    { id: 'chess', title: 'CHESS OPENING RECOMMENDATION', icon: <ChessKing size={20} /> },
     { id: 'p2', title: 'OBJECT DETECTION SYSTEM', icon: <Image size={20} /> },
-    { id: 'p3', title: 'PREDICTIVE DATA ANALYSIS', icon: <BarChart3 size={20} /> },
     { id: 'p4', title: 'SYSTEM CONFIGURATION', icon: <Settings size={20} /> },
   ];
 
@@ -31,7 +31,7 @@ const ProjectMenu = ({ isBackendReady, onBack, onSelectProject }) => {
           <button
             key={proj.id}
             onClick={() => onSelectProject(proj.id)}
-            disabled={!isBackendReady}
+            disabled={!isBackendReady | proj.id != 'mnist'}
             className="w-full h-20 px-8 flex items-center justify-between border border-white/10 hover:border-white hover:bg-white/5 disabled:opacity-20 transition-all group"
           >
             <div className="flex items-center gap-6">

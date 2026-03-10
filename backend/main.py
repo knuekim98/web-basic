@@ -2,6 +2,7 @@ import base64
 import io
 import numpy as np
 import torch
+import torch.nn.functional as F
 from PIL import Image
 from fastapi import FastAPI, Body
 from fastapi.middleware.cors import CORSMiddleware
@@ -45,7 +46,13 @@ async def predict_mnist(data: dict = Body(...)):
     img_array = img_array.reshape(1, 1, 28, 28)
     x = torch.from_numpy(img_array).to(torch.float32)
 
+    '''
+    import matplotlib.pyplot as plt
+    plt.imshow(np.squeeze(x))
+    plt.show()
+    '''
+
     with torch.no_grad():
         prediction = mnist(x)
         digit = int(np.argmax(prediction))
-    return {"digit": digit, "confidence": float(torch.max(prediction))}
+    return {"digit": digit, "prob": F.softmax(prediction, dim=1).squeeze().tolist()}
