@@ -10,9 +10,17 @@ export default function App() {
 
   useEffect(() => {
     const API_URL = import.meta.env.VITE_API_URL;
-    axios.get(`${API_URL}/`)
-      .then(() => setIsBackendReady(true))
-      .catch(() => console.log("Backend waking up..."));
+    const checkBackend = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/`);
+        if (response.status == 200) {
+          setIsBackendReady(true);
+        }
+      } catch (e) {
+        setTimeout(checkBackend, 5000);
+      }
+    };
+    checkBackend();
   }, []);
 
   return (

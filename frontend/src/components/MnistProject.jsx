@@ -16,19 +16,40 @@ const MnistProject = ({ onBack }) => {
     ctx.strokeStyle = 'white';
   }, []);
 
+  const getCoordinates = (e) => {
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    
+    if (e.touches && e.touches[0]) {
+      return {
+        x: e.touches[0].clientX - rect.left,
+        y: e.touches[0].clientY - rect.top
+      };
+    }
+    
+    return {
+      x: e.nativeEvent.offsetX,
+      y: e.nativeEvent.offsetY
+    };
+  };
+
   const startDrawing = (e) => {
-    const { offsetX, offsetY } = e.nativeEvent;
+    if (e.type === 'touchstart') e.preventDefault();
+
+    const { x, y } = getCoordinates(e);
     const ctx = canvasRef.current.getContext('2d');
     ctx.beginPath();
-    ctx.moveTo(offsetX, offsetY);
+    ctx.moveTo(x, y);
     setIsDrawing(true);
   };
 
   const draw = (e) => {
     if (!isDrawing) return;
-    const { offsetX, offsetY } = e.nativeEvent;
+    if (e.type === 'touchmove') e.preventDefault();
+
+    const { x, y } = getCoordinates(e);
     const ctx = canvasRef.current.getContext('2d');
-    ctx.lineTo(offsetX, offsetY);
+    ctx.lineTo(x, y);
     ctx.stroke();
   };
 
@@ -36,7 +57,7 @@ const MnistProject = ({ onBack }) => {
 
   const handlePredict = async () => {
     const canvas = canvasRef.current;
-    const imageBase64 = canvas.toDataURL('image/png'); // 이미지 추출
+    const imageBase64 = canvas.toDataURL('image/png');
 
     try {
       const response = await axios.post(`${API_URL}/predict/mnist`, {
@@ -75,6 +96,9 @@ const MnistProject = ({ onBack }) => {
           onMouseMove={draw}
           onMouseUp={stopDrawing}
           onMouseLeave={stopDrawing}
+          onTouchStart={startDrawing}
+          onTouchMove={draw}
+          onTouchEnd={stopDrawing}
           className="bg-black border border-white/20 cursor-crosshair rounded-lg touch-none"
         />
         <div className="flex flex-col gap-4 w-64">
