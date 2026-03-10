@@ -1,8 +1,9 @@
---index-url https://download.pytorch.org/whl/cpu
-torch==2.4.1
-torchvision
 numpy==1.22.3
 fastapi
 uvicorn
 python-multipart
 Pillow
+
+--index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
