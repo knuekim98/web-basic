@@ -1,5 +1,8 @@
+tensorflow-cpu
+torch
+torchvision
 fastapi
 uvicorn
-tensorflow
+python-multipart
 Pillow
 numpy
