@@ -7,7 +7,7 @@ from PIL import Image
 from fastapi import FastAPI, Body
 from fastapi.middleware.cors import CORSMiddleware
 
-from mnist.model import CNN
+from dev.mnist.model import CNN
 
 
 # load models
