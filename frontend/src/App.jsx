@@ -3,6 +3,7 @@ import axios from 'axios';
 import LandingPage from './components/LandingPage';
 import ProjectMenu from './components/ProjectMenu';
 import MnistProject from './components/MnistProject';
+import ChessProject from './components/ChessProject';
 
 export default function App() {
   const [page, setPage] = useState('landing');
@@ -39,6 +40,10 @@ export default function App() {
 
       {page === 'mnist' && (
         <MnistProject onBack={() => setPage('menu')} />
+      )}
+
+      {page === 'chess' && (
+        <ChessProject onBack={() => setPage('menu')} />
       )}
     </main>
   );

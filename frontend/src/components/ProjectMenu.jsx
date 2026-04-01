@@ -31,7 +31,7 @@ const ProjectMenu = ({ isBackendReady, onBack, onSelectProject }) => {
           <button
             key={proj.id}
             onClick={() => onSelectProject(proj.id)}
-            disabled={!isBackendReady | proj.id != 'mnist'}
+            disabled={!isBackendReady | !['mnist','chess'].includes(proj.id)}
             className="w-full h-20 px-8 flex items-center justify-between border border-white/10 hover:border-white hover:bg-white/5 disabled:opacity-20 transition-all group"
           >
             <div className="flex items-center gap-6">

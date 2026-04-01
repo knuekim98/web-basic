@@ -1,14 +1,17 @@
 import base64
 import io
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn.functional as F
 from PIL import Image
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from typing import List
 
 from dev.mnist.model import CNN
-
+df_chess_white = pd.read_csv("./datasets/chess/db_white_processed.csv")
+df_chess_black = None #pd.read_csv("./datasets/chess/db_black_processed.csv")
 
 # load models
 mnist = CNN()
@@ -46,13 +49,33 @@ async def predict_mnist(data: dict = Body(...)):
     img_array = img_array.reshape(1, 1, 28, 28)
     x = torch.from_numpy(img_array).to(torch.float32)
 
-    '''
-    import matplotlib.pyplot as plt
-    plt.imshow(np.squeeze(x))
-    plt.show()
-    '''
-
     with torch.no_grad():
         prediction = mnist(x)
         digit = int(np.argmax(prediction))
     return {"digit": digit, "prob": F.softmax(prediction, dim=1).squeeze().tolist()}
+
+
+@app.post("/api/chess/query")
+async def query_chess_data(
+    columns: List[str] = Body(default=["name", "ECO", "white", "draws", "black"]),
+    limit: int = Body(default=50),
+    offset: int = Body(default=0),
+    sortby: str = Body(default="games"),
+    ascending: bool = Body(default=True),
+    color: str = Body(default="white")
+):
+    try:
+        df = df_chess_white if color=="white" else df_chess_black
+        if any(col not in list(df.columns) for col in columns) or sortby not in list(df.columns):
+            raise HTTPException(status_code=400, detail="Invalid columns requested")
+
+        sorted_df = df.sort_values(by=sortby, ascending=ascending)
+        result_df = sorted_df.iloc[offset : offset+limit]
+        data = result_df[columns].to_dict(orient="records")
+
+        return {
+            "total_count": len(df),
+            "data": data
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
