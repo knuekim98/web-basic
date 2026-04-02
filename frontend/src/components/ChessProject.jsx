@@ -14,7 +14,7 @@ const ChessProject = ({ onBack }) => {
     setLoading(true);
     try {
       const response = await axios.post(`${API_URL}/api/chess/query`, {
-        columns: ["name", "white", "draws", "black", "average_rating", "moves", "ECO", "games"],
+        columns: ["name", "white", "draws", "black", "average_rating", "moves", "ECO", "games", "white_rate", "draws_rate", "black_rate"],
         limit: pageSize,
         offset: currentPage * pageSize,
         sortby: "games",
@@ -33,16 +33,6 @@ const ChessProject = ({ onBack }) => {
   useEffect(() => {
     fetchData();
   }, [currentPage]);
-
-  const getRates = (w, d, b) => {
-    const total = w + d + b;
-    return {
-      white: ((w / total) * 100).toFixed(1),
-      draw: ((d / total) * 100).toFixed(1),
-      black: ((b / total) * 100).toFixed(1),
-      total: total.toLocaleString()
-    };
-  };
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-200 p-6 md:p-16 font-sans">
@@ -71,7 +61,6 @@ const ChessProject = ({ onBack }) => {
               {loading ? (
                 <tr><td colSpan="3" className="p-32 text-center text-zinc-500 tracking-widest text-lg animate-pulse">ACCESSING DATABASE...</td></tr>
               ) : data.map((item, idx) => {
-                const rates = getRates(item.white, item.draws, item.black);
                 return (
                   <tr key={idx} className="hover:bg-white/[0.02] transition-all group">
                     {/* Name & Total Games */}
@@ -83,7 +72,7 @@ const ChessProject = ({ onBack }) => {
                         <div className="flex items-center gap-3">
                           <span className="text-xs font-mono px-2 py-1 bg-white/5 rounded text-zinc-400">{item.ECO}</span>
                           <span className="text-sm font-medium text-zinc-500">
-                            <b className="text-zinc-300">{rates.total}</b> games played
+                            <b className="text-zinc-300">{item.games}</b> games played
                           </span>
                         </div>
                       </div>
@@ -93,14 +82,14 @@ const ChessProject = ({ onBack }) => {
                     <td className="p-8 w-80">
                       <div className="flex flex-col gap-3">
                         <div className="flex h-4 w-full rounded-full overflow-hidden bg-zinc-800 ring-1 ring-white/10">
-                          <div style={{ width: `${rates.white}%` }} className="bg-white" />
-                          <div style={{ width: `${rates.draw}%` }} className="bg-zinc-500" />
-                          <div style={{ width: `${rates.black}%` }} className="bg-zinc-700" />
+                          <div style={{ width: `${item.white_rate}%` }} className="bg-white" />
+                          <div style={{ width: `${item.draws_rate}%` }} className="bg-zinc-500" />
+                          <div style={{ width: `${item.black_rate}%` }} className="bg-zinc-700" />
                         </div>
                         <div className="flex justify-between text-xs font-bold font-mono">
-                          <span className="text-white">W {rates.white}%</span>
-                          <span className="text-zinc-400">D {rates.draw}%</span>
-                          <span className="text-zinc-500">B {rates.black}%</span>
+                          <span className="text-white">W {item.white_rate}%</span>
+                          <span className="text-zinc-400">D {item.draws_rate}%</span>
+                          <span className="text-zinc-500">B {item.black_rate}%</span>
                         </div>
                       </div>
                     </td>

@@ -3,7 +3,7 @@
 
 .env*
 .vite
-backend/datasets
+backend/datasets/
 
 ### Node ###
 # Logs

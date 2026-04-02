@@ -48,6 +48,6 @@ def make_db(opening):
             line.append(data["draws"])
             line.append(data["black"])
 
-        with open("./backend/datasets/chess/db_white_selected.csv", "a+", newline='', encoding='utf-8') as f:
+        with open("./backend/db/chess/db_white_selected.csv", "a+", newline='', encoding='utf-8') as f:
             csv.writer(f).writerow(line)
         print(i, line)

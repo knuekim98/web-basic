@@ -10,8 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 
 from dev.mnist.model import CNN
-df_chess_white = pd.read_csv("./datasets/chess/db_white_processed.csv")
-df_chess_black = None #pd.read_csv("./datasets/chess/db_black_processed.csv")
+df_chess_white = pd.read_csv("./db/chess/db_white_processed.csv")
+df_chess_black = None #pd.read_csv("./db/chess/db_black_processed.csv")
 
 # load models
 mnist = CNN()
