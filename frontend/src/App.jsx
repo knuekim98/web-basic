@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import LandingPage from './components/LandingPage';
 import ProjectMenu from './components/ProjectMenu';
-import MnistProject from './components/MnistProject';
-import ChessProject from './components/ChessProject';
+import MnistProject from './components/projects/MnistProject';
+import ChessProject from './components/projects/ChessProject';
 
 export default function App() {
   const [page, setPage] = useState('landing');

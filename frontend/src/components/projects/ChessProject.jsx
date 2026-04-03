@@ -1,38 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, Hash } from 'lucide-react';
 import axios from 'axios';
+import ChessOpeningDetail from './ChessOpeningDetail';
 
 const ChessProject = ({ onBack }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
-  const pageSize = 15;
-  const API_URL = import.meta.env.VITE_API_URL;
+  const [selectedOpening, setSelectedOpening] = useState(null);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.post(`${API_URL}/api/chess/query`, {
-        columns: ["name", "white", "draws", "black", "average_rating", "moves", "ECO", "games", "white_rate", "draws_rate", "black_rate"],
-        limit: pageSize,
-        offset: currentPage * pageSize,
-        sortby: "games",
-        ascending: false,
-        color: "white"
-      });
-      setData(response.data.data);
-      setTotalCount(response.data.total_count);
-    } catch (error) {
-      console.error("Fetch error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const pageSize = 15;
 
   useEffect(() => {
+    const API_URL = import.meta.env.VITE_API_URL;
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.post(`${API_URL}/api/chess/query`, {
+          columns: ["fen", "name", "white", "draws", "black", "average_rating", "moves", "ECO", "games", "white_rate", "draws_rate", "black_rate"],
+          limit: pageSize,
+          offset: currentPage * pageSize,
+          sortby: "games",
+          ascending: false,
+          color: "white"
+        });
+        setData(response.data.data);
+        setTotalCount(response.data.total_count);
+      } catch (error) {
+        console.error("Fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchData();
   }, [currentPage]);
+
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const getPaginationRange = () => {
+    const current = currentPage + 1;
+    const range = [];
+    const delta = 2; // 현재 페이지 앞뒤로 보여줄 개수
+
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= current - delta && i <= current + delta)) {
+        range.push(i);
+      } else if (range[range.length - 1] !== '...') {
+        range.push('...');
+      }
+    }
+    return range;
+  };
+
+  if (selectedOpening) {
+    return (
+      <ChessOpeningDetail 
+        opening={selectedOpening} 
+        onBack={() => setSelectedOpening(null)} 
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-200 p-6 md:p-16 font-sans">
@@ -66,7 +93,10 @@ const ChessProject = ({ onBack }) => {
                     {/* Name & Total Games */}
                     <td className="p-8 overflow-hidden">
                       <div className="flex flex-col gap-2 max-w-full">
-                        <span className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors leading-tight truncate">
+                        <span 
+                          onClick={() => setSelectedOpening(item)}
+                          className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors leading-tight truncate"
+                        >
                           {item.name}
                         </span>
                         <div className="flex items-center gap-3">
@@ -109,27 +139,38 @@ const ChessProject = ({ onBack }) => {
           </table>
         </div>
 
-        {/* Pagination Controls */}
-        <div className="p-8 border-t border-white/10 bg-white/[0.01] flex items-center justify-between">
-          <p className="text-sm text-zinc-500 font-mono">
-            SHOWING <span className="text-white">{(currentPage * pageSize) + 1}-{Math.min((currentPage + 1) * pageSize, totalCount)}</span> OF {totalCount.toLocaleString()}
-          </p>
-          <div className="flex gap-4">
-            <button 
-              onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-              disabled={currentPage === 0}
-              className="px-6 py-3 rounded-xl border border-white/10 hover:bg-white/5 disabled:opacity-20 disabled:hover:bg-transparent transition-all flex items-center gap-2 text-xs font-bold tracking-widest uppercase"
+        {/* 숫자형 페이지네이션 버튼 영역 */}
+        <div className="p-8 border-t border-white/10 flex items-center justify-center gap-2">
+          <button 
+            onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+            disabled={currentPage === 0}
+            className="p-2 text-zinc-500 hover:text-white disabled:opacity-20"
+          >
+            <ChevronLeft size={20} />
+          </button>
+
+          {getPaginationRange().map((page, idx) => (
+            <button
+              key={idx}
+              onClick={() => typeof page === 'number' && setCurrentPage(page - 1)}
+              disabled={page === '...'}
+              className={`min-w-[40px] h-10 rounded-lg text-sm font-mono transition-all ${
+                currentPage + 1 === page 
+                ? 'bg-white text-black font-bold' 
+                : 'text-zinc-500 hover:bg-white/5 hover:text-white'
+              } ${page === '...' ? 'cursor-default' : ''}`}
             >
-              <ChevronLeft size={16} /> Prev
+              {page}
             </button>
-            <button 
-              onClick={() => setCurrentPage(prev => prev + 1)}
-              disabled={(currentPage + 1) * pageSize >= totalCount}
-              className="px-6 py-3 bg-white text-black hover:bg-zinc-200 disabled:opacity-20 transition-all flex items-center gap-2 text-xs font-bold tracking-widest uppercase"
-            >
-              Next <ChevronRight size={16} />
-            </button>
-          </div>
+          ))}
+
+          <button 
+            onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+            disabled={(currentPage + 1) >= totalPages}
+            className="p-2 text-zinc-500 hover:text-white disabled:opacity-20"
+          >
+            <ChevronRight size={20} />
+          </button>
         </div>
       </div>
     </div>
