@@ -25,6 +25,7 @@ for fn in FILENAME:
         moves_to_fen[moves] = fen
 
         move_num = int(eco[fen]["moves"].split('.')[-2].strip().split(' ')[-1])
+        eco[fen]["move_num"] = move_num
         if " " not in eco[fen]["moves"].split('.')[-1].strip():
             opening_white[fen] = {
                 "eco": eco[fen]["eco"],
@@ -73,14 +74,16 @@ def get_data(url):
     return json.loads(res.text)
 
 
+# filter opening: 3~6 moves, >500000 standard games
 def select_opening(moves, opening_original, fn):
     opening = {}
     for i, (_, m) in enumerate(moves):
         fen = moves_to_fen[m]
+        if not (3 <= opening_original[fen]["move_num"] <= 6): continue
         data = get_data(f"https://explorer.lichess.org/lichess?fen={fen}&topGames=0&recentGames=0&since=2015-01&speeds=blitz,rapid,classical&ratings=1400,1600,1800,2000,2200,2500")
         games = data["white"]+data["draws"]+data["black"]
 
-        if games >= 1000000:
+        if games >= 500000:
             opening[fen] = opening_original[fen]
             # remove parent
             if fen in parent:
@@ -91,5 +94,5 @@ def select_opening(moves, opening_original, fn):
     with open(f"./backend/datasets/chess/eco_{fn}_selected.json", "w") as f:
         json.dump(opening, f, indent=4)
 
-#select_opening(moves_white, opening_white, "white")
-select_opening(moves_black, opening_black, "black")
+select_opening(moves_white, opening_white, "white")
+#select_opening(moves_black, opening_black, "black")

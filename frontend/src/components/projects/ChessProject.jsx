@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ChevronLeft, ChevronRight, Hash } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import axios from 'axios';
 import ChessOpeningDetail from './ChessOpeningDetail';
 
@@ -8,6 +8,7 @@ const ChessProject = ({ onBack }) => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedOpening, setSelectedOpening] = useState(null);
 
   const pageSize = 15;
@@ -18,12 +19,13 @@ const ChessProject = ({ onBack }) => {
       setLoading(true);
       try {
         const response = await axios.post(`${API_URL}/api/chess/query`, {
-          columns: ["fen", "name", "white", "draws", "black", "average_rating", "moves", "ECO", "games", "white_rate", "draws_rate", "black_rate"],
+          columns: "all",
           limit: pageSize,
           offset: currentPage * pageSize,
           sortby: "games",
           ascending: false,
-          color: "white"
+          color: "white",
+          search: searchTerm
         });
         setData(response.data.data);
         setTotalCount(response.data.total_count);
@@ -34,13 +36,18 @@ const ChessProject = ({ onBack }) => {
       }
     };
     fetchData();
-  }, [currentPage]);
+  }, [currentPage, searchTerm]);
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(0);
+  };
 
   const totalPages = Math.ceil(totalCount / pageSize);
   const getPaginationRange = () => {
     const current = currentPage + 1;
     const range = [];
-    const delta = 2; // 현재 페이지 앞뒤로 보여줄 개수
+    const delta = 2;
 
     for (let i = 1; i <= totalPages; i++) {
       if (i === 1 || i === totalPages || (i >= current - delta && i <= current + delta)) {
@@ -68,9 +75,32 @@ const ChessProject = ({ onBack }) => {
         <button onClick={onBack} className="flex items-center gap-2 text-zinc-500 hover:text-white mb-6 transition-colors text-sm uppercase tracking-widest">
           <ArrowLeft size={18} /> Back to Dashboard
         </button>
-        <h1 className="text-5xl font-black text-white tracking-tighter italic">
-          CHESS OPENINGS <span className="text-zinc-700">EXPLORER</span>
-        </h1>
+
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <h1 className="text-5xl font-black text-white tracking-tighter italic">
+            CHESS OPENINGS <span className="text-zinc-700">EXPLORER</span>
+          </h1>
+
+          {/* 검색 바 UI */}
+          <div className="relative w-full md:w-96">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+            <input 
+              type="text"
+              placeholder="Search by Name or Moves"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-sm focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all"
+            />
+            {searchTerm && (
+              <button 
+                onClick={() => setSearchTerm("")}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Table Container */}
@@ -87,22 +117,22 @@ const ChessProject = ({ onBack }) => {
             <tbody className="divide-y divide-white/[0.05]">
               {loading ? (
                 <tr><td colSpan="3" className="p-32 text-center text-zinc-500 tracking-widest text-lg animate-pulse">ACCESSING DATABASE...</td></tr>
-              ) : data.map((item, idx) => {
+              ) : data.map((opening, idx) => {
                 return (
                   <tr key={idx} className="hover:bg-white/[0.02] transition-all group">
                     {/* Name & Total Games */}
                     <td className="p-8 overflow-hidden">
                       <div className="flex flex-col gap-2 max-w-full">
                         <span 
-                          onClick={() => setSelectedOpening(item)}
+                          onClick={() => setSelectedOpening(opening)}
                           className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors leading-tight truncate"
                         >
-                          {item.name}
+                          {opening.name}
                         </span>
                         <div className="flex items-center gap-3">
-                          <span className="text-xs font-mono px-2 py-1 bg-white/5 rounded text-zinc-400">{item.ECO}</span>
+                          <span className="text-xs font-mono px-2 py-1 bg-white/5 rounded text-zinc-400">{opening.ECO}</span>
                           <span className="text-sm font-medium text-zinc-500">
-                            <b className="text-zinc-300">{item.games}</b> games played
+                            <b className="text-zinc-300">{opening.games.toLocaleString()}</b> games played
                           </span>
                         </div>
                       </div>
@@ -112,14 +142,14 @@ const ChessProject = ({ onBack }) => {
                     <td className="p-8 w-80">
                       <div className="flex flex-col gap-3">
                         <div className="flex h-4 w-full rounded-full overflow-hidden bg-zinc-800 ring-1 ring-white/10">
-                          <div style={{ width: `${item.white_rate}%` }} className="bg-white" />
-                          <div style={{ width: `${item.draws_rate}%` }} className="bg-zinc-500" />
-                          <div style={{ width: `${item.black_rate}%` }} className="bg-zinc-700" />
+                          <div style={{ width: `${opening.white_rate}%` }} className="bg-white" />
+                          <div style={{ width: `${opening.draws_rate}%` }} className="bg-zinc-500" />
+                          <div style={{ width: `${opening.black_rate}%` }} className="bg-zinc-700" />
                         </div>
                         <div className="flex justify-between text-xs font-bold font-mono">
-                          <span className="text-white">W {item.white_rate}%</span>
-                          <span className="text-zinc-400">D {item.draws_rate}%</span>
-                          <span className="text-zinc-500">B {item.black_rate}%</span>
+                          <span className="text-white">W {opening.white_rate}%</span>
+                          <span className="text-zinc-400">D {opening.draws_rate}%</span>
+                          <span className="text-zinc-500">B {opening.black_rate}%</span>
                         </div>
                       </div>
                     </td>
@@ -127,8 +157,8 @@ const ChessProject = ({ onBack }) => {
                     {/* Move Sequence (Highlighted) */}
                     <td className="p-8 overflow-hidden">
                       <div className="bg-black/30 px-4 py-3 rounded-lg border border-white/5 max-w-full">
-                        <p className="text-xs font-mono text-zinc-500 truncate italic" title={item.moves}>
-                          {item.moves}
+                        <p className="text-xs font-mono text-zinc-500 truncate italic" title={opening.moves}>
+                          {opening.moves}
                         </p>
                       </div>
                     </td>

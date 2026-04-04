@@ -2,6 +2,9 @@ import pandas as pd
 
 def preprocess(fn):
     df = pd.read_csv(f"./backend/db/chess/db_{fn}_selected.csv", encoding="utf-8")
+
+    df = df[df["moves"].str.split('.').str[-2].str.strip().str.split(' ').str[-1].astype('int') > 2]
+
     df["games"] = df["white"] + df["draws"] + df["black"]
     df["white_rate"] = df["white"] / df["games"] * 100
     df["draws_rate"] = df["draws"] / df["games"] * 100

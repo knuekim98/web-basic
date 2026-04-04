@@ -3,18 +3,6 @@ import { ArrowLeft } from 'lucide-react';
 import { Chessboard } from 'react-chessboard';
 
 const ChessOpeningDetail = ({ opening, onBack }) => {
-  // 확률 계산 함수 (분리된 파일에서도 동일하게 사용)
-  const getRates = (w, d, b) => {
-    const total = w + d + b;
-    return {
-      white: ((w / total) * 100).toFixed(1),
-      draw: ((d / total) * 100).toFixed(1),
-      black: ((b / total) * 100).toFixed(1),
-      total: total.toLocaleString()
-    };
-  };
-
-  const rates = getRates(opening.white, opening.draws, opening.black);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-200 p-6 md:p-16">
@@ -60,7 +48,7 @@ const ChessOpeningDetail = ({ opening, onBack }) => {
               </div>
               <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5">
                 <p className="text-zinc-500 text-[10px] uppercase tracking-widest mb-1">Total Games</p>
-                <p className="text-2xl font-bold text-white">{rates.total}</p>
+                <p className="text-2xl font-bold text-white">{opening.games.toLocaleString()}</p>
               </div>
             </div>
             
@@ -68,14 +56,14 @@ const ChessOpeningDetail = ({ opening, onBack }) => {
             <div className="flex flex-col gap-4">
               <p className="text-zinc-500 text-[10px] uppercase tracking-widest">Performance</p>
               <div className="flex h-6 w-full rounded-full overflow-hidden bg-zinc-800 ring-1 ring-white/10">
-                <div style={{ width: `${rates.white}%` }} className="bg-white" />
-                <div style={{ width: `${rates.draw}%` }} className="bg-zinc-500" />
-                <div style={{ width: `${rates.black}%` }} className="bg-zinc-700" />
+                <div style={{ width: `${opening.white_rate}%` }} className="bg-white" />
+                <div style={{ width: `${opening.draws_rate}%` }} className="bg-zinc-500" />
+                <div style={{ width: `${opening.black_rate}%` }} className="bg-zinc-700" />
               </div>
               <div className="flex justify-between font-mono text-xs font-bold">
-                <span className="text-white">WHITE {rates.white}%</span>
-                <span className="text-zinc-500">DRAW {rates.draw}%</span>
-                <span className="text-zinc-400">BLACK {rates.black}%</span>
+                <span className="text-white">WHITE {opening.white_rate}%</span>
+                <span className="text-zinc-500">DRAW {opening.draws_rate}%</span>
+                <span className="text-zinc-400">BLACK {opening.black_rate}%</span>
               </div>
             </div>
           </div>

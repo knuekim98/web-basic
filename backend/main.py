@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from PIL import Image
 from fastapi import FastAPI, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List
+from typing import List, Union
 
 from dev.mnist.model import CNN
 df_chess_white = pd.read_csv("./db/chess/db_white_processed.csv")
@@ -15,7 +15,7 @@ df_chess_black = None #pd.read_csv("./db/chess/db_black_processed.csv")
 
 # load models
 mnist = CNN()
-mnist.load_state_dict(torch.load("./models/mnist.pth"))
+mnist.load_state_dict(torch.load("./models/mnist.pth", weights_only=True))
 mnist.eval()
 
 
@@ -57,25 +57,33 @@ async def predict_mnist(data: dict = Body(...)):
 
 @app.post("/api/chess/query")
 async def query_chess_data(
-    columns: List[str] = Body(default=["name", "ECO", "white", "draws", "black"]),
+    columns: Union[List[str], str] = Body(default=["name", "ECO", "white", "draws", "black"]),
     limit: int = Body(default=50),
     offset: int = Body(default=0),
     sortby: str = Body(default="games"),
     ascending: bool = Body(default=True),
-    color: str = Body(default="white")
+    color: str = Body(default="white"),
+    search: str = Body(default="")
 ):
-    try:
-        df = df_chess_white if color=="white" else df_chess_black
-        if any(col not in list(df.columns) for col in columns) or sortby not in list(df.columns):
-            raise HTTPException(status_code=400, detail="Invalid columns requested")
+    df = df_chess_white if color=="white" else df_chess_black
+    if isinstance(columns, str):
+        if columns == "all": columns = df.columns
+        else: raise HTTPException(status_code=400, detail="Invalid columns requested")
+    elif any(col not in list(df.columns) for col in columns) or sortby not in list(df.columns):
+        raise HTTPException(status_code=400, detail="Invalid columns requested")
+    
+    if search:
+        search_mask = (
+            df['name'].str.contains(search, case=False, na=False) | 
+            df['moves'].str.contains(search, case=False, na=False)
+        )
+        df = df[search_mask]
 
-        sorted_df = df.sort_values(by=sortby, ascending=ascending)
-        result_df = sorted_df.iloc[offset : offset+limit]
-        data = result_df[columns].to_dict(orient="records")
+    sorted_df = df.sort_values(by=sortby, ascending=ascending)
+    result_df = sorted_df.iloc[offset : offset+limit]
+    data = result_df[columns].to_dict(orient="records")
 
-        return {
-            "total_count": len(df),
-            "data": data
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "total_count": len(df),
+        "data": data
+    }
