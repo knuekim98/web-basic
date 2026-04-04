@@ -1,12 +1,51 @@
 import React from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Trophy, Users, BarChart2, TrendingUp } from 'lucide-react';
 import { Chessboard } from 'react-chessboard';
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  AreaChart, Area, ReferenceLine, BarChart, Bar
+} from 'recharts';
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-zinc-900 border border-white/10 p-3 rounded-lg shadow-xl font-mono text-[11px]">
+        <p className="text-zinc-500 mb-1 uppercase tracking-widest">{label}</p>
+        {payload.map((entry, index) => (
+          <p key={index} style={{ color: entry.color }} className="font-bold">
+            {entry.name}: {entry.value}%
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
 
 const ChessOpeningDetail = ({ opening, onBack }) => {
 
+    const ratingData = [
+        { name: '0', wr: opening['0_score_rate'], win: opening['0_white_rate'] },
+        { name: '1000', wr: opening['1000_score_rate'], win: opening['1000_white_rate'] },
+        { name: '1200', wr: opening['1200_score_rate'], win: opening['1200_white_rate'] },
+        { name: '1400', wr: opening['1400_score_rate'], win: opening['1400_white_rate'] },
+        { name: '1600', wr: opening['1600_score_rate'], win: opening['1600_white_rate'] },
+        { name: '1800', wr: opening['1800_score_rate'], win: opening['1800_white_rate'] },
+        { name: '2000', wr: opening['2000_score_rate'], win: opening['2000_white_rate'] },
+        { name: '2200', wr: opening['2200_score_rate'], win: opening['2200_white_rate'] },
+        { name: '2500', wr: opening['2500_score_rate'], win: opening['2500_white_rate'] },
+    ];
+
+    const timeData = [
+        { name: 'Bullet', wr: opening['bullet_score_rate'], win: opening['bullet_white_rate'] },
+        { name: 'Blitz', wr: opening['blitz_score_rate'], win: opening['blitz_white_rate'] },
+        { name: 'Rapid', wr: opening['rapid_score_rate'], win: opening['rapid_white_rate'] },
+        { name: 'Classical', wr: opening['classical_score_rate'], win: opening['classical_white_rate'] },
+    ];
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-200 p-6 md:p-16">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <button 
           onClick={onBack}
           className="flex items-center gap-2 text-zinc-500 hover:text-white mb-10 transition-colors text-sm uppercase tracking-widest"
@@ -14,9 +53,9 @@ const ChessOpeningDetail = ({ opening, onBack }) => {
           <ArrowLeft size={18} /> Back to List
         </button>
 
-        <div className="flex flex-col md:flex-row gap-12 items-start">
+        <div className="flex flex-col lg:flex-row gap-16 items-start mb-20">
           {/* 1. 체스 보드 영역 (React-Chessboard) */}
-          <div className="w-full lg:w-[500px] shrink-0">
+          <div className="w-full lg:w-[450px] shrink-0">
             <div className="aspect-square rounded-xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/5">
               <Chessboard 
                 options={{
@@ -65,6 +104,54 @@ const ChessOpeningDetail = ({ opening, onBack }) => {
                 <span className="text-zinc-500">DRAW {opening.draws_rate}%</span>
                 <span className="text-zinc-400">BLACK {opening.black_rate}%</span>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* --- 분석 차트 대시보드 --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          
+          {/* 1. 레이팅별 승률 */}
+          <div className="bg-zinc-900/30 border border-white/5 p-8 rounded-[2rem]">
+            <h3 className="text-[11px] text-zinc-500 uppercase tracking-[0.3em] font-bold mb-8 flex items-center gap-2">
+              <TrendingUp size={14} className="text-pink-400" /> Win Rate by Rating
+            </h3>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={ratingData} margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                  <XAxis dataKey="name" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Line name="Win+Draw/2" type="monotone" dataKey="wr" stroke="#ec4899" strokeWidth={3} dot={{ fill: '#ec4899', r: 4 }} />
+                  <Line name="Win Only" type="monotone" dataKey="win" stroke="#dddddd" strokeWidth={2} strokeDasharray="5 5" dot={{ fill: '#ffffff', r: 3, strokeDasharray: 0 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* 2. 시간대별 승률 */}
+          <div className="bg-zinc-900/30 border border-white/5 p-8 rounded-[2rem]">
+            <h3 className="text-[11px] text-zinc-500 uppercase tracking-[0.3em] font-bold mb-8 flex items-center gap-2">
+              <BarChart2 size={14} className="text-pink-400" /> Win Rate by Speed
+            </h3>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={timeData} margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorWr" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ec4899" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#ec4899" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                  <XAxis dataKey="name" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area name="Win+Draw/2" type="monotone" dataKey="wr" stroke="#ec4899" fillOpacity={1} fill="url(#colorWr)" strokeWidth={3} />
+                  <Area name="Win Only" type="monotone" dataKey="win" stroke="#dddddd" fill="transparent" strokeWidth={2} strokeDasharray="5 5" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>

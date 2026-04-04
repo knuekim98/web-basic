@@ -81,8 +81,8 @@ const MnistProject = ({ onBack }) => {
     <div className="min-h-screen p-8 md:p-20 flex flex-col items-center bg-[#0a0a0a] text-white">
       {/* 상단 헤더 */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-16">
-        <button onClick={onBack} className="flex items-center gap-2 text-gray-500 hover:text-white transition-all uppercase tracking-widest text-[10px]">
-          <ArrowLeft size={14} /> Back to Projects
+        <button onClick={onBack} className="flex items-center gap-2 text-zinc-500 hover:text-white mb-6 transition-colors text-sm uppercase tracking-widest">
+          <ArrowLeft size={18} /> Back to Dashboard
         </button>
         <h2 className="text-xl font-bold tracking-[0.2em] uppercase">MNIST Recognition</h2>
       </div>
@@ -103,25 +103,25 @@ const MnistProject = ({ onBack }) => {
             onTouchEnd={stopDrawing}
             className="bg-black border border-white/10 cursor-crosshair rounded-xl shadow-2xl transition-all group-hover:border-white/30 touch-none"
           />
-          <p className="absolute -bottom-8 left-0 w-full text-center text-[10px] text-gray-600 uppercase tracking-widest">Draw a digit (0-9)</p>
+          <p className="absolute -bottom-8 left-0 w-full text-center text-[12px] text-gray-600 uppercase tracking-widest">Draw a digit (0-9)</p>
         </div>
 
         {/* 2. 컨트롤 및 예측 결과 */}
         <div className="flex flex-col gap-4 w-full max-w-[240px]">
-          <button onClick={clearCanvas} className="w-full py-4 border border-white/5 hover:bg-white/5 flex items-center justify-center gap-3 transition-all text-[10px] tracking-widest uppercase">
+          <button onClick={clearCanvas} className="w-full py-4 border border-white/5 hover:bg-white/5 flex items-center justify-center gap-3 transition-all text-[12px] tracking-widest uppercase">
             <RotateCcw size={14} /> Reset Canvas
           </button>
           <button 
             onClick={handlePredict} 
             disabled={isLoading}
-            className="w-full py-4 bg-white text-black hover:bg-gray-200 disabled:bg-gray-600 flex items-center justify-center gap-3 transition-all text-[10px] font-bold tracking-widest uppercase"
+            className="w-full py-4 bg-white text-black hover:bg-gray-200 disabled:bg-gray-600 flex items-center justify-center gap-3 transition-all text-[12px] font-bold tracking-widest uppercase"
           >
             {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Play size={14} fill="black" />}
             {isLoading ? "Analyzing..." : "Predict Digit"}
           </button>
           
           <div className="mt-4 p-8 border border-white/5 bg-zinc-900/30 rounded-3xl text-center relative overflow-hidden group">
-            <span className="text-[10px] text-gray-500 block mb-1 uppercase tracking-widest relative z-10">Result</span>
+            <span className="text-[12px] text-gray-500 block mb-1 uppercase tracking-widest relative z-10">Result</span>
             <span className="text-8xl font-black tracking-tighter relative z-10">
               {prediction !== null ? prediction : '?'}
             </span>
@@ -133,7 +133,7 @@ const MnistProject = ({ onBack }) => {
 
         {/* 3. 확률 막대 그래프 */}
         <div className="w-full max-w-md bg-zinc-900/20 p-8 rounded-3xl border border-white/5">
-          <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-8 text-center">Probability Distribution</p>
+          <p className="text-[12px] text-gray-500 uppercase tracking-widest mb-8 text-center">Probability Distribution</p>
           <div className="grid grid-cols-10 gap-2 items-end h-40 px-2 border-b border-white/10 pb-2">
             {probabilities.map((prob, i) => (
               <div key={i} className="flex flex-col items-center gap-3 h-full justify-end group/item">
