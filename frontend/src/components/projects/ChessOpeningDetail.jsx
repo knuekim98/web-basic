@@ -22,26 +22,55 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-const ChessOpeningDetail = ({ opening, onBack }) => {
+const ChessOpeningDetail = ({ opening, totalCount, onBack }) => {
 
-    const ratingData = [
-        { name: '0', wr: opening['0_score_rate'], win: opening['0_white_rate'] },
-        { name: '1000', wr: opening['1000_score_rate'], win: opening['1000_white_rate'] },
-        { name: '1200', wr: opening['1200_score_rate'], win: opening['1200_white_rate'] },
-        { name: '1400', wr: opening['1400_score_rate'], win: opening['1400_white_rate'] },
-        { name: '1600', wr: opening['1600_score_rate'], win: opening['1600_white_rate'] },
-        { name: '1800', wr: opening['1800_score_rate'], win: opening['1800_white_rate'] },
-        { name: '2000', wr: opening['2000_score_rate'], win: opening['2000_white_rate'] },
-        { name: '2200', wr: opening['2200_score_rate'], win: opening['2200_white_rate'] },
-        { name: '2500', wr: opening['2500_score_rate'], win: opening['2500_white_rate'] },
-    ];
+  const scoreHistData = [0, 0, 0, 0, 0, 1, 1, 1, 5, 18, 27, 51, 82, 94, 105, 129, 57, 59, 53, 26, 15, 21, 7, 7, 2, 3, 1, 0, 0, 0];
+  const drawsHistData = [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 8, 9, 36, 106, 201, 193, 126, 54, 15, 10, 3, 1, 0, 1, 0, 0, 0, 0, 0, 0];
+  const scoreDistData = scoreHistData.map(val => ({ count: val }));
+  const drawsDistData = drawsHistData.map(val => ({ count: val }));
 
-    const timeData = [
-        { name: 'Bullet', wr: opening['bullet_score_rate'], win: opening['bullet_white_rate'] },
-        { name: 'Blitz', wr: opening['blitz_score_rate'], win: opening['blitz_white_rate'] },
-        { name: 'Rapid', wr: opening['rapid_score_rate'], win: opening['rapid_white_rate'] },
-        { name: 'Classical', wr: opening['classical_score_rate'], win: opening['classical_white_rate'] },
-    ];
+  const ratingData = [
+      { name: '0', wr: opening['0_score_rate'], win: opening['0_white_rate'] },
+      { name: '1000', wr: opening['1000_score_rate'], win: opening['1000_white_rate'] },
+      { name: '1200', wr: opening['1200_score_rate'], win: opening['1200_white_rate'] },
+      { name: '1400', wr: opening['1400_score_rate'], win: opening['1400_white_rate'] },
+      { name: '1600', wr: opening['1600_score_rate'], win: opening['1600_white_rate'] },
+      { name: '1800', wr: opening['1800_score_rate'], win: opening['1800_white_rate'] },
+      { name: '2000', wr: opening['2000_score_rate'], win: opening['2000_white_rate'] },
+      { name: '2200', wr: opening['2200_score_rate'], win: opening['2200_white_rate'] },
+      { name: '2500', wr: opening['2500_score_rate'], win: opening['2500_white_rate'] },
+  ];
+
+  const timeData = [
+      { name: 'Bullet', wr: opening['bullet_score_rate'], win: opening['bullet_white_rate'] },
+      { name: 'Blitz', wr: opening['blitz_score_rate'], win: opening['blitz_white_rate'] },
+      { name: 'Rapid', wr: opening['rapid_score_rate'], win: opening['rapid_white_rate'] },
+      { name: 'Classical', wr: opening['classical_score_rate'], win: opening['classical_white_rate'] },
+  ];
+
+  const renderScoreBar = (props) => {
+      const { x, y, width, height, index } = props;
+      const isHighlighted = index === opening.score_rate_hist;
+      return (
+          <rect 
+              x={x} y={y} width={width} height={height} 
+              fill={isHighlighted ? '#ec4899' : '#27272a'} 
+              rx={2}
+          />
+      );
+  };
+  const renderDrawsBar = (props) => {
+      const { x, y, width, height, index } = props;
+      const isHighlighted = index === opening.draws_rate_hist;
+      return (
+          <rect 
+              x={x} y={y} width={width} height={height} 
+              fill={isHighlighted ? '#ec4899' : '#27272a'} 
+              rx={2}
+          />
+      );
+  };
+
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-200 p-6 md:p-16">
@@ -107,6 +136,68 @@ const ChessOpeningDetail = ({ opening, onBack }) => {
             </div>
           </div>
         </div>
+
+        
+        {/* score_rate rank, draws_rate rank, pick rate */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            
+            <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl flex flex-col h-56 relative">
+                <h3 className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold mb-4">Win+Draw/2 Rate Rank</h3>
+                <div className="flex-1 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={scoreDistData} margin={{ top: 10, bottom: 30 }}>
+                            <Bar dataKey="count" shape={renderScoreBar} />
+                            <ReferenceLine 
+                                x={opening.score_rate_hist} 
+                                stroke="none" 
+                                label={{ 
+                                    position: 'bottom', 
+                                    value: `${opening.score_rate}% (#${opening.score_rate_rank})`, 
+                                    fill: '#f472b6', 
+                                    fontSize: 13,
+                                    fontWeight: 'bold',
+                                    dy: 8
+                                }} 
+                            />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl flex flex-col h-56 relative">
+                <h3 className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold mb-4">Draw Rate Rank</h3>
+                <div className="flex-1 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={drawsDistData} margin={{ top: 10, bottom: 30 }}>
+                            <Bar dataKey="count" shape={renderDrawsBar} />
+                            <ReferenceLine 
+                                x={opening.draws_rate_hist} 
+                                stroke="none" 
+                                label={{ 
+                                    position: 'bottom', 
+                                    value: `${opening.draws_rate}% (#${opening.draws_rate_rank})`, 
+                                    fill: '#f472b6', 
+                                    fontSize: 13,
+                                    fontWeight: 'bold',
+                                    dy: 8
+                                }} 
+                            />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl flex flex-col justify-center items-center h-56 relative">
+              <h3 className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold absolute top-6 left-6"> Popularity </h3>
+              <div className="flex flex-col items-center">
+                  <span className="text-4xl font-black text-white italic tracking-tighter"> 
+                      #{opening.selection_rate_rank} <span className="text-zinc-600 text-2xl">/ {totalCount}</span>
+                  </span>
+                  <p className="text-right text-m font-mono text-zinc-400 mt-2"> Pick Rate: {opening.selection_rate}% </p>
+              </div>
+            </div>
+        </div>
+
 
         {/* --- 분석 차트 대시보드 --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">

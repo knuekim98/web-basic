@@ -62,7 +62,8 @@ const ChessProject = ({ onBack }) => {
   if (selectedOpening) {
     return (
       <ChessOpeningDetail 
-        opening={selectedOpening} 
+        opening={selectedOpening}
+        totalCount={765} 
         onBack={() => setSelectedOpening(null)} 
       />
     );
