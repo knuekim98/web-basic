@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Trophy, Users, BarChart2, TrendingUp } from 'lucide-react';
+import { ArrowLeft, BarChart2, TrendingUp } from 'lucide-react';
 import { Chessboard } from 'react-chessboard';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -22,30 +22,37 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-const ChessOpeningDetail = ({ opening, totalCount, onBack }) => {
+const ChessOpeningDetail = ({ opening, color, onBack }) => {
 
-  const scoreHistData = [0, 0, 0, 0, 0, 1, 1, 1, 5, 18, 27, 51, 82, 94, 105, 129, 57, 59, 53, 26, 15, 21, 7, 7, 2, 3, 1, 0, 0, 0];
-  const drawsHistData = [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 8, 9, 36, 106, 201, 193, 126, 54, 15, 10, 3, 1, 0, 1, 0, 0, 0, 0, 0, 0];
-  const scoreDistData = scoreHistData.map(val => ({ count: val }));
-  const drawsDistData = drawsHistData.map(val => ({ count: val }));
+  const totalGames = {"white": 765, "black": 393}
+  const scoreHistData = {
+    white: [0, 0, 0, 0, 0, 1, 1, 1, 5, 18, 27, 51, 82, 94, 105, 129, 57, 59, 53, 26, 15, 21, 7, 7, 2, 3, 1, 0, 0, 0],
+    black: [0, 0, 0, 0, 0, 1, 0, 0, 1, 3, 9, 29, 48, 103, 106, 65, 34, 9, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0] 
+  };
+  const drawsHistData = {
+    white: [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 8, 9, 36, 106, 201, 193, 126, 54, 15, 10, 3, 1, 0, 1, 0, 0, 0, 0, 0, 0],
+    black: [0, 0, 0, 0, 0, 1, 0, 0, 1, 16, 13, 20, 52, 57, 52, 69, 39, 31, 26, 13, 11, 3, 5, 2, 0, 0, 0, 0, 0, 0]
+  };
+  const scoreDistData = scoreHistData[color].map(val => ({ count: val }));
+  const drawsDistData = drawsHistData[color].map(val => ({ count: val }));
 
   const ratingData = [
-      { name: '0', wr: opening['0_score_rate'], win: opening['0_white_rate'] },
-      { name: '1000', wr: opening['1000_score_rate'], win: opening['1000_white_rate'] },
-      { name: '1200', wr: opening['1200_score_rate'], win: opening['1200_white_rate'] },
-      { name: '1400', wr: opening['1400_score_rate'], win: opening['1400_white_rate'] },
-      { name: '1600', wr: opening['1600_score_rate'], win: opening['1600_white_rate'] },
-      { name: '1800', wr: opening['1800_score_rate'], win: opening['1800_white_rate'] },
-      { name: '2000', wr: opening['2000_score_rate'], win: opening['2000_white_rate'] },
-      { name: '2200', wr: opening['2200_score_rate'], win: opening['2200_white_rate'] },
-      { name: '2500', wr: opening['2500_score_rate'], win: opening['2500_white_rate'] },
+      { name: '0', wr: opening['0_score_rate'], win: opening[`0_${color}_rate`] },
+      { name: '1000', wr: opening['1000_score_rate'], win: opening[`1000_${color}_rate`] },
+      { name: '1200', wr: opening['1200_score_rate'], win: opening[`1200_${color}_rate`] },
+      { name: '1400', wr: opening['1400_score_rate'], win: opening[`1400_${color}_rate`] },
+      { name: '1600', wr: opening['1600_score_rate'], win: opening[`1600_${color}_rate`] },
+      { name: '1800', wr: opening['1800_score_rate'], win: opening[`1800_${color}_rate`] },
+      { name: '2000', wr: opening['2000_score_rate'], win: opening[`2000_${color}_rate`] },
+      { name: '2200', wr: opening['2200_score_rate'], win: opening[`2200_${color}_rate`] },
+      { name: '2500', wr: opening['2500_score_rate'], win: opening[`2500_${color}_rate`] },
   ];
 
   const timeData = [
-      { name: 'Bullet', wr: opening['bullet_score_rate'], win: opening['bullet_white_rate'] },
-      { name: 'Blitz', wr: opening['blitz_score_rate'], win: opening['blitz_white_rate'] },
-      { name: 'Rapid', wr: opening['rapid_score_rate'], win: opening['rapid_white_rate'] },
-      { name: 'Classical', wr: opening['classical_score_rate'], win: opening['classical_white_rate'] },
+      { name: 'Bullet', wr: opening['bullet_score_rate'], win: opening[`bullet_${color}_rate`] },
+      { name: 'Blitz', wr: opening['blitz_score_rate'], win: opening[`blitz_${color}_rate`] },
+      { name: 'Rapid', wr: opening['rapid_score_rate'], win: opening[`rapid_${color}_rate`] },
+      { name: 'Classical', wr: opening['classical_score_rate'], win: opening[`classical_${color}_rate`] },
   ];
 
   const renderScoreBar = (props) => {
@@ -89,7 +96,7 @@ const ChessOpeningDetail = ({ opening, totalCount, onBack }) => {
               <Chessboard 
                 options={{
                     position: opening.fen,
-                    boardOrientation: "white",
+                    boardOrientation: {color},
                     allowDragging: false
                 }}
               />
@@ -124,14 +131,34 @@ const ChessOpeningDetail = ({ opening, totalCount, onBack }) => {
             <div className="flex flex-col gap-4">
               <p className="text-zinc-500 text-[10px] uppercase tracking-widest">Performance</p>
               <div className="flex h-6 w-full rounded-full overflow-hidden bg-zinc-800 ring-1 ring-white/10">
-                <div style={{ width: `${opening.white_rate}%` }} className="bg-white" />
-                <div style={{ width: `${opening.draws_rate}%` }} className="bg-zinc-500" />
-                <div style={{ width: `${opening.black_rate}%` }} className="bg-zinc-700" />
+                {color === 'white' ? (
+                  <>
+                    <div style={{ width: `${opening.white_rate}%` }} className="bg-white" />
+                    <div style={{ width: `${opening.draws_rate}%` }} className="bg-zinc-500" />
+                    <div style={{ width: `${opening.black_rate}%` }} className="bg-zinc-700" />
+                  </>
+                ) : (
+                  <>
+                    <div style={{ width: `${opening.black_rate}%` }} className="bg-zinc-700" />
+                    <div style={{ width: `${opening.draws_rate}%` }} className="bg-zinc-500" />
+                    <div style={{ width: `${opening.white_rate}%` }} className="bg-white" />
+                  </>
+                )}
               </div>
               <div className="flex justify-between font-mono text-xs font-bold">
-                <span className="text-white">WHITE {opening.white_rate}%</span>
-                <span className="text-zinc-500">DRAW {opening.draws_rate}%</span>
-                <span className="text-zinc-400">BLACK {opening.black_rate}%</span>
+                {color === 'white' ? (
+                  <>
+                    <span className="text-white">WHITE {opening.white_rate}%</span>
+                    <span className="text-zinc-500">DRAW {opening.draws_rate}%</span>
+                    <span className="text-zinc-400">BLACK {opening.black_rate}%</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-zinc-400">BLACK {opening.black_rate}%</span>
+                    <span className="text-zinc-500">DRAW {opening.draws_rate}%</span>
+                    <span className="text-white">WHITE {opening.white_rate}%</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -191,7 +218,7 @@ const ChessOpeningDetail = ({ opening, totalCount, onBack }) => {
               <h3 className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold absolute top-6 left-6"> Popularity </h3>
               <div className="flex flex-col items-center">
                   <span className="text-4xl font-black text-white italic tracking-tighter"> 
-                      #{opening.selection_rate_rank} <span className="text-zinc-600 text-2xl">/ {totalCount}</span>
+                      #{opening.selection_rate_rank} <span className="text-zinc-600 text-2xl">/ {totalGames[color]}</span>
                   </span>
                   <p className="text-right text-m font-mono text-zinc-400 mt-2"> Pick Rate: {opening.selection_rate}% </p>
               </div>

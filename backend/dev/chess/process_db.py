@@ -6,7 +6,8 @@ SPEEDS = ["bullet","blitz","rapid","classical"]
 
 def preprocess(fn):
     df = pd.read_csv(f"./backend/db/chess/db_{fn}_selected.csv", encoding="utf-8")
-    df = df[df["moves"].str.split('.').str[-2].str.strip().str.split(' ').str[-1].astype('int') > 2]
+    # filter to 3~6 move opening
+    # df = df[3 <= df["moves"].str.split('.').str[-2].str.strip().str.split(' ').str[-1].astype('int') <= 6]
 
     df["games"] = df["white"] + df["draws"] + df["black"]
     df["white_rate"] = (df["white"] / df["games"] * 100).round(1)
@@ -36,12 +37,13 @@ def preprocess(fn):
     df["score_rate_hist"] = ((df["score_rate"] - 20) / 2).astype(int)
     df["draws_rate_hist"] = (df["draws_rate"] * 3).astype(int)
 
-    white_score_hist, _ = np.histogram(df['score_rate'], bins=30, range=(20, 80))
-    white_draws_hist, _ = np.histogram(df['draws_rate'], bins=30, range=(0, 10))
-    print(white_draws_hist)
-    print(white_score_hist)
+    score_hist, _ = np.histogram(df['score_rate'], bins=30, range=(20, 80))
+    draws_hist, _ = np.histogram(df['draws_rate'], bins=30, range=(0, 10))
+    print(score_hist)
+    print(draws_hist)
 
     df.to_csv(f"./backend/db/chess/db_{fn}_processed.csv", na_rep="NaN", encoding="utf-8", index=False)
     print(f"processed: {fn}")
 
 preprocess("white")
+preprocess("black")

@@ -10,6 +10,8 @@ TOKEN = os.environ.get("API_TOKEN")
 
 with open(f"./backend/datasets/chess/eco_white_selected.json", encoding="utf-8") as f:
     opening_white = json.load(f)
+with open(f"./backend/datasets/chess/eco_black_selected.json", encoding="utf-8") as f:
+    opening_black = json.load(f)
 
 def get_data(url):
     res = requests.get(url, headers={"Authorization": f"Bearer {TOKEN}"})
@@ -21,9 +23,9 @@ def get_data(url):
 
 RATINGS = [0,1000,1200,1400,1600,1800,2000,2200,2500]
 SPEEDS = ["bullet","blitz","rapid","classical"]
-def make_db(opening):
+def make_db(opening, fn):
     for i, fen in enumerate(opening):
-        if not (512<=i): continue
+        if not (1<=i): continue
         line = [fen, opening[fen]["name"], opening[fen]["moves"], opening[fen]["eco"]]
 
         data = get_data(f"https://explorer.lichess.org/lichess?fen={fen}&topGames=0&recentGames=0&since=2015-01&speeds=blitz,rapid,classical&ratings=1400,1600,1800,2000,2200,2500")
@@ -48,6 +50,10 @@ def make_db(opening):
             line.append(data["draws"])
             line.append(data["black"])
 
-        with open("./backend/db/chess/db_white_selected.csv", "a+", newline='', encoding='utf-8') as f:
+        with open(f"./backend/db/chess/db_{fn}_selected.csv", "a+", newline='', encoding='utf-8') as f:
             csv.writer(f).writerow(line)
         print(i, line)
+    print(f"succeed to get db of {fn}")
+
+# make_db(opening_white, "white")
+make_db(opening_black, "black")

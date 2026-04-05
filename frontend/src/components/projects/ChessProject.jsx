@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, ChessKing, Search, X } from 'lucide-react';
 import axios from 'axios';
 import ChessOpeningDetail from './ChessOpeningDetail';
 
@@ -9,6 +9,7 @@ const ChessProject = ({ onBack }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [color, setColor] = useState("white");
   const [selectedOpening, setSelectedOpening] = useState(null);
 
   const pageSize = 15;
@@ -24,7 +25,7 @@ const ChessProject = ({ onBack }) => {
           offset: currentPage * pageSize,
           sortby: "games",
           ascending: false,
-          color: "white",
+          color: color,
           search: searchTerm
         });
         setData(response.data.data);
@@ -36,10 +37,14 @@ const ChessProject = ({ onBack }) => {
       }
     };
     fetchData();
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, color]);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
+    setCurrentPage(0);
+  };
+  const toggleColor = () => {
+    setColor(prev => prev === "white" ? "black" : "white");
     setCurrentPage(0);
   };
 
@@ -63,7 +68,7 @@ const ChessProject = ({ onBack }) => {
     return (
       <ChessOpeningDetail 
         opening={selectedOpening}
-        totalCount={765} 
+        color={color}
         onBack={() => setSelectedOpening(null)} 
       />
     );
@@ -77,12 +82,32 @@ const ChessProject = ({ onBack }) => {
           <ArrowLeft size={18} /> Back to Dashboard
         </button>
 
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <h1 className="text-5xl font-black text-white tracking-tighter italic">
-            CHESS OPENINGS <span className="text-zinc-700">EXPLORER</span>
-          </h1>
+        <h1 className="text-5xl font-black text-white tracking-tighter italic">
+          CHESS OPENINGS <span className="text-zinc-700">EXPLORER</span>
+        </h1>
 
-          {/* 검색 바 UI */}
+        <h3 className="text-sm text-zinc-500 italic mt-3">
+          This database catalogs with 1M+ recorded games on lichess.org,<br></br>
+          restricted to the initial 3-6 moves and games played at a 1400+ rating, blitz or longer time control. 
+        </h3>
+
+        <div className="mt-12 flex flex-col md:flex-row items-center justify-between gap-6">
+          {/* color toggle button */}
+          <button
+            onClick={toggleColor}
+            className={`group w-14 h-14 flex items-center justify-center rounded-2xl border transition-all duration-300 relative ${
+              color === 'white'
+              ? 'bg-white text-black border-zinc-200 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:bg-zinc-100'
+              : 'bg-zinc-900 text-white border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.5)] hover:bg-zinc-700'
+            }`}
+          >
+            <ChessKing 
+              size={27} 
+              className="transition-transform duration-300 group-active:scale-90"
+            />
+          </button>
+          
+          {/* search bar */}
           <div className="relative w-full md:w-96">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
             <input 
@@ -139,23 +164,43 @@ const ChessProject = ({ onBack }) => {
                       </div>
                     </td>
 
-                    {/* Win Rate (Thicker Bar) */}
+                    {/* Win Rate Bar */}
                     <td className="p-8 w-80">
                       <div className="flex flex-col gap-3">
                         <div className="flex h-4 w-full rounded-full overflow-hidden bg-zinc-800 ring-1 ring-white/10">
-                          <div style={{ width: `${opening.white_rate}%` }} className="bg-white" />
-                          <div style={{ width: `${opening.draws_rate}%` }} className="bg-zinc-500" />
-                          <div style={{ width: `${opening.black_rate}%` }} className="bg-zinc-700" />
+                          {color === 'white' ? (
+                            <>
+                              <div style={{ width: `${opening.white_rate}%` }} className="bg-white" />
+                              <div style={{ width: `${opening.draws_rate}%` }} className="bg-zinc-500" />
+                              <div style={{ width: `${opening.black_rate}%` }} className="bg-zinc-700" />
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ width: `${opening.black_rate}%` }} className="bg-zinc-700" />
+                              <div style={{ width: `${opening.draws_rate}%` }} className="bg-zinc-500" />
+                              <div style={{ width: `${opening.white_rate}%` }} className="bg-white" />
+                            </>
+                          )}
                         </div>
                         <div className="flex justify-between text-xs font-bold font-mono">
-                          <span className="text-white">W {opening.white_rate}%</span>
-                          <span className="text-zinc-400">D {opening.draws_rate}%</span>
-                          <span className="text-zinc-500">B {opening.black_rate}%</span>
+                          {color === 'white' ? (
+                            <>
+                              <span className="text-white">W {opening.white_rate}%</span>
+                              <span className="text-zinc-400">D {opening.draws_rate}%</span>
+                              <span className="text-zinc-500">B {opening.black_rate}%</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-zinc-500">B {opening.black_rate}%</span>
+                              <span className="text-zinc-400">D {opening.draws_rate}%</span>
+                              <span className="text-white">W {opening.white_rate}%</span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </td>
 
-                    {/* Move Sequence (Highlighted) */}
+                    {/* Move Sequence */}
                     <td className="p-8 overflow-hidden">
                       <div className="bg-black/30 px-4 py-3 rounded-lg border border-white/5 max-w-full">
                         <p className="text-xs font-mono text-zinc-500 truncate italic" title={opening.moves}>
@@ -170,7 +215,7 @@ const ChessProject = ({ onBack }) => {
           </table>
         </div>
 
-        {/* 숫자형 페이지네이션 버튼 영역 */}
+        {/* Pagnation */}
         <div className="p-8 border-t border-white/10 flex items-center justify-center gap-2">
           <button 
             onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
