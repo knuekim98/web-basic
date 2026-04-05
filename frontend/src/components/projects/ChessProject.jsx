@@ -185,15 +185,15 @@ const ChessProject = ({ onBack }) => {
                         <div className="flex justify-between text-xs font-bold font-mono">
                           {color === 'white' ? (
                             <>
-                              <span className="text-white">W {opening.white_rate}%</span>
-                              <span className="text-zinc-400">D {opening.draws_rate}%</span>
-                              <span className="text-zinc-500">B {opening.black_rate}%</span>
+                              <span className="text-white">W {opening.white_rate.toFixed(1)}%</span>
+                              <span className="text-zinc-400">D {opening.draws_rate.toFixed(1)}%</span>
+                              <span className="text-zinc-500">B {opening.black_rate.toFixed(1)}%</span>
                             </>
                           ) : (
                             <>
-                              <span className="text-zinc-500">B {opening.black_rate}%</span>
-                              <span className="text-zinc-400">D {opening.draws_rate}%</span>
-                              <span className="text-white">W {opening.white_rate}%</span>
+                              <span className="text-zinc-500">B {opening.black_rate.toFixed(1)}%</span>
+                              <span className="text-zinc-400">D {opening.draws_rate.toFixed(1)}%</span>
+                              <span className="text-white">W {opening.white_rate.toFixed(1)}%</span>
                             </>
                           )}
                         </div>
@@ -215,7 +215,7 @@ const ChessProject = ({ onBack }) => {
           </table>
         </div>
 
-        {/* Pagnation */}
+        {/* Pagination */}
         <div className="p-8 border-t border-white/10 flex items-center justify-center gap-2">
           <button 
             onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}

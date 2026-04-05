@@ -96,5 +96,5 @@ def select_opening(moves, opening_original, fn):
         json.dump(opening, f, indent=4)
     print(f"succeed to get opening lists for {fn}")
 
-#select_opening(moves_white, opening_white, "white")
-select_opening(moves_black, opening_black, "black")
+select_opening(moves_white, opening_white, "white")
+#select_opening(moves_black, opening_black, "black")

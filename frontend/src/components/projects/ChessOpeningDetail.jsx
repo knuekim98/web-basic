@@ -13,7 +13,7 @@ const CustomTooltip = ({ active, payload, label }) => {
         <p className="text-zinc-500 mb-1 uppercase tracking-widest">{label}</p>
         {payload.map((entry, index) => (
           <p key={index} style={{ color: entry.color }} className="font-bold">
-            {entry.name}: {entry.value}%
+            {entry.name}: {entry.value.toFixed(1)}%
           </p>
         ))}
       </div>
@@ -24,14 +24,14 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 const ChessOpeningDetail = ({ opening, color, onBack }) => {
 
-  const totalGames = {"white": 765, "black": 393}
+  const totalGames = {white: 494, black: 411}
   const scoreHistData = {
-    white: [0, 0, 0, 0, 0, 1, 1, 1, 5, 18, 27, 51, 82, 94, 105, 129, 57, 59, 53, 26, 15, 21, 7, 7, 2, 3, 1, 0, 0, 0],
-    black: [0, 0, 0, 0, 0, 1, 0, 0, 1, 3, 9, 29, 48, 103, 106, 65, 34, 9, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0] 
+    white: [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 6, 24, 70, 122, 145, 76, 29, 10, 3, 2, 1, 0, 1, 0, 0, 0, 0, 0],
+    black: [0, 0, 0, 0, 0, 1, 0, 0, 1, 3, 10, 29, 50, 101, 106, 65, 33, 9, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0] 
   };
   const drawsHistData = {
-    white: [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 8, 9, 36, 106, 201, 193, 126, 54, 15, 10, 3, 1, 0, 1, 0, 0, 0, 0, 0, 0],
-    black: [0, 0, 0, 0, 0, 1, 0, 0, 1, 16, 13, 20, 52, 57, 52, 69, 39, 31, 26, 13, 11, 3, 5, 2, 0, 0, 0, 0, 0, 0]
+    white: [0, 0, 0, 0, 0, 1, 0, 1, 4, 10, 21, 40, 46, 74, 86, 70, 53, 34, 19, 14, 14, 3, 3, 1, 0, 0, 0, 0, 0, 0],
+    black: [0, 0, 0, 0, 0, 1, 0, 0, 6, 10, 14, 25, 44, 63, 59, 56, 44, 34, 20, 14, 12, 2, 5, 2, 0, 0, 0, 0, 0, 0]
   };
   const scoreDistData = scoreHistData[color].map(val => ({ count: val }));
   const drawsDistData = drawsHistData[color].map(val => ({ count: val }));
@@ -96,7 +96,7 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
               <Chessboard 
                 options={{
                     position: opening.fen,
-                    boardOrientation: {color},
+                    boardOrientation: color,
                     allowDragging: false
                 }}
               />
@@ -148,15 +148,15 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
               <div className="flex justify-between font-mono text-xs font-bold">
                 {color === 'white' ? (
                   <>
-                    <span className="text-white">WHITE {opening.white_rate}%</span>
-                    <span className="text-zinc-500">DRAW {opening.draws_rate}%</span>
-                    <span className="text-zinc-400">BLACK {opening.black_rate}%</span>
+                    <span className="text-white">WHITE {opening.white_rate.toFixed(1)}%</span>
+                    <span className="text-zinc-500">DRAW {opening.draws_rate.toFixed(1)}%</span>
+                    <span className="text-zinc-400">BLACK {opening.black_rate.toFixed(1)}%</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-zinc-400">BLACK {opening.black_rate}%</span>
-                    <span className="text-zinc-500">DRAW {opening.draws_rate}%</span>
-                    <span className="text-white">WHITE {opening.white_rate}%</span>
+                    <span className="text-zinc-400">BLACK {opening.black_rate.toFixed(1)}%</span>
+                    <span className="text-zinc-500">DRAW {opening.draws_rate.toFixed(1)}%</span>
+                    <span className="text-white">WHITE {opening.white_rate.toFixed(1)}%</span>
                   </>
                 )}
               </div>
@@ -179,7 +179,7 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
                                 stroke="none" 
                                 label={{ 
                                     position: 'bottom', 
-                                    value: `${opening.score_rate}% (#${opening.score_rate_rank})`, 
+                                    value: `${opening.score_rate.toFixed(2)}% (#${opening.score_rate_rank})`, 
                                     fill: '#f472b6', 
                                     fontSize: 13,
                                     fontWeight: 'bold',
@@ -202,7 +202,7 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
                                 stroke="none" 
                                 label={{ 
                                     position: 'bottom', 
-                                    value: `${opening.draws_rate}% (#${opening.draws_rate_rank})`, 
+                                    value: `${opening.draws_rate.toFixed(2)}% (#${opening.draws_rate_rank})`, 
                                     fill: '#f472b6', 
                                     fontSize: 13,
                                     fontWeight: 'bold',
@@ -220,7 +220,7 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
                   <span className="text-4xl font-black text-white italic tracking-tighter"> 
                       #{opening.selection_rate_rank} <span className="text-zinc-600 text-2xl">/ {totalGames[color]}</span>
                   </span>
-                  <p className="text-right text-m font-mono text-zinc-400 mt-2"> Pick Rate: {opening.selection_rate}% </p>
+                  <p className="text-right text-m font-mono text-zinc-400 mt-2"> Pick Rate: {opening.selection_rate.toFixed(2)}% </p>
               </div>
             </div>
         </div>

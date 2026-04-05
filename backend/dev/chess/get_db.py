@@ -55,5 +55,5 @@ def make_db(opening, fn):
         print(i, line)
     print(f"succeed to get db of {fn}")
 
-# make_db(opening_white, "white")
-make_db(opening_black, "black")
+make_db(opening_white, "white")
+#make_db(opening_black, "black")
