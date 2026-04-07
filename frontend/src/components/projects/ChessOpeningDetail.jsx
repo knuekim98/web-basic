@@ -25,16 +25,23 @@ const CustomTooltip = ({ active, payload, label }) => {
 const ChessOpeningDetail = ({ opening, color, onBack }) => {
 
   const totalGames = {white: 494, black: 411}
+  const avgScore = color === 'white' ? 52.0159 : 48.1595;
   const scoreHistData = {
-    white: [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 6, 24, 70, 122, 145, 76, 29, 10, 3, 2, 1, 0, 1, 0, 0, 0, 0, 0],
-    black: [0, 0, 0, 0, 0, 1, 0, 0, 1, 3, 10, 29, 50, 101, 106, 65, 33, 9, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0] 
+    white: [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 6, 24, 70, 122, 145, 76, 29, 10, 3, 2, 1, 0, 1, 0, 0, 0, 0, 0],
+    black: [0, 0, 0, 0, 1, 0, 0, 1, 3, 10, 29, 50, 101, 106, 65, 33, 9, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0] 
   };
   const drawsHistData = {
-    white: [0, 0, 0, 0, 0, 1, 0, 1, 4, 10, 21, 40, 46, 74, 86, 70, 53, 34, 19, 14, 14, 3, 3, 1, 0, 0, 0, 0, 0, 0],
-    black: [0, 0, 0, 0, 0, 1, 0, 0, 6, 10, 14, 25, 44, 63, 59, 56, 44, 34, 20, 14, 12, 2, 5, 2, 0, 0, 0, 0, 0, 0]
+    white: [0, 0, 0, 0, 0, 1, 0, 1, 4, 10, 21, 40, 46, 74, 86, 70, 53, 34, 19, 14, 14, 3, 3, 1, 0, 0, 0, 0, 0, 0, 0],
+    black: [0, 0, 0, 0, 0, 1, 0, 0, 6, 10, 14, 25, 44, 63, 59, 56, 44, 34, 20, 14, 12, 2, 5, 2, 0, 0, 0, 0, 0, 0, 0]
   };
-  const scoreDistData = scoreHistData[color].map(val => ({ count: val }));
-  const drawsDistData = drawsHistData[color].map(val => ({ count: val }));
+  const scoreDistData = scoreHistData[color].map((val, i) => ({ 
+    count: val,
+    label: 22 + i*2
+  }));
+  const drawsDistData = drawsHistData[color].map((val, i) => ({ 
+    count: val,
+    label: (i/3).toFixed(1)
+  }));
 
   const ratingData = [
       { name: '0', wr: opening['0_score_rate'], win: opening[`0_${color}_rate`] },
@@ -47,7 +54,6 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
       { name: '2200', wr: opening['2200_score_rate'], win: opening[`2200_${color}_rate`] },
       { name: '2500', wr: opening['2500_score_rate'], win: opening[`2500_${color}_rate`] },
   ];
-
   const timeData = [
       { name: 'Bullet', wr: opening['bullet_score_rate'], win: opening[`bullet_${color}_rate`] },
       { name: 'Blitz', wr: opening['blitz_score_rate'], win: opening[`blitz_${color}_rate`] },
@@ -77,6 +83,23 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
           />
       );
   };
+
+  const getYDomain = (data, keys) => {
+    const allValues = data.flatMap(d => 
+      keys.map(key => parseFloat(d[key]))
+    ).filter(v => !isNaN(v));
+    allValues.push(avgScore);
+
+    const min = Math.min(...allValues);
+    const max = Math.max(...allValues);
+    
+    return [
+      Math.max(0, parseFloat((min - 1).toFixed(1))),
+      Math.min(100, parseFloat((max + 1).toFixed(1)))
+    ];
+  };
+  const ratingDomain = getYDomain(ratingData, ['wr', 'win']);
+  const timeDomain = getYDomain(timeData, ['wr', 'win']);
 
 
   return (
@@ -145,17 +168,17 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
                   </>
                 )}
               </div>
-              <div className="flex justify-between font-mono text-xs font-bold">
+              <div className="flex justify-between font-mono text-sm font-bold">
                 {color === 'white' ? (
                   <>
                     <span className="text-white">WHITE {opening.white_rate.toFixed(1)}%</span>
-                    <span className="text-zinc-500">DRAW {opening.draws_rate.toFixed(1)}%</span>
-                    <span className="text-zinc-400">BLACK {opening.black_rate.toFixed(1)}%</span>
+                    <span className="text-zinc-400">DRAW {opening.draws_rate.toFixed(1)}%</span>
+                    <span className="text-zinc-500">BLACK {opening.black_rate.toFixed(1)}%</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-zinc-400">BLACK {opening.black_rate.toFixed(1)}%</span>
-                    <span className="text-zinc-500">DRAW {opening.draws_rate.toFixed(1)}%</span>
+                    <span className="text-zinc-500">BLACK {opening.black_rate.toFixed(1)}%</span>
+                    <span className="text-zinc-400">DRAW {opening.draws_rate.toFixed(1)}%</span>
                     <span className="text-white">WHITE {opening.white_rate.toFixed(1)}%</span>
                   </>
                 )}
@@ -172,18 +195,29 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
                 <h3 className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold mb-4">Win+Draw/2 Rate Rank</h3>
                 <div className="flex-1 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={scoreDistData} margin={{ top: 10, bottom: 30 }}>
+                        <BarChart data={scoreDistData} margin={{ top: 25, bottom: -10 }}>
                             <Bar dataKey="count" shape={renderScoreBar} />
+                            <XAxis 
+                                dataKey="label" 
+                                fontSize={8} 
+                                tickLine={false} 
+                                axisLine={false} 
+                                stroke="#52525b" 
+                                interval={13}
+                                padding={{left:5, right:5}}
+                                tickFormatter={(value) => `${value}%`}
+                            />
                             <ReferenceLine 
-                                x={opening.score_rate_hist} 
-                                stroke="none" 
+                                x={scoreDistData[opening.score_rate_hist]?.label} 
+                                stroke="#f472b6" 
+                                strokeDasharray="3 3"
                                 label={{ 
-                                    position: 'bottom', 
+                                    position: 'top', 
                                     value: `${opening.score_rate.toFixed(2)}% (#${opening.score_rate_rank})`, 
                                     fill: '#f472b6', 
-                                    fontSize: 13,
+                                    fontSize: 12,
                                     fontWeight: 'bold',
-                                    dy: 8
+                                    dy: 0
                                 }} 
                             />
                         </BarChart>
@@ -195,18 +229,29 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
                 <h3 className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold mb-4">Draw Rate Rank</h3>
                 <div className="flex-1 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={drawsDistData} margin={{ top: 10, bottom: 30 }}>
+                        <BarChart data={drawsDistData} margin={{ top: 25, bottom: -10 }}>
                             <Bar dataKey="count" shape={renderDrawsBar} />
+                            <XAxis 
+                                dataKey="label" 
+                                fontSize={8} 
+                                tickLine={false} 
+                                axisLine={false} 
+                                stroke="#52525b" 
+                                interval={14}
+                                padding={{left:5, right:5}}
+                                tickFormatter={(value) => `${value}%`}
+                            />
                             <ReferenceLine 
-                                x={opening.draws_rate_hist} 
-                                stroke="none" 
+                                x={drawsDistData[opening.draws_rate_hist]?.label} 
+                                stroke="#f472b6" 
+                                strokeDasharray="3 3"
                                 label={{ 
-                                    position: 'bottom', 
+                                    position: 'top', 
                                     value: `${opening.draws_rate.toFixed(2)}% (#${opening.draws_rate_rank})`, 
                                     fill: '#f472b6', 
-                                    fontSize: 13,
+                                    fontSize: 12,
                                     fontWeight: 'bold',
-                                    dy: 8
+                                    dy: 0
                                 }} 
                             />
                         </BarChart>
@@ -226,10 +271,9 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
         </div>
 
 
-        {/* --- 분석 차트 대시보드 --- */}
+        {/* rating & speed chart */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           
-          {/* 1. 레이팅별 승률 */}
           <div className="bg-zinc-900/30 border border-white/5 p-8 rounded-[2rem]">
             <h3 className="text-[11px] text-zinc-500 uppercase tracking-[0.3em] font-bold mb-8 flex items-center gap-2">
               <TrendingUp size={14} className="text-pink-400" /> Win Rate by Rating
@@ -239,7 +283,12 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
                 <LineChart data={ratingData} margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                   <XAxis dataKey="name" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
+                  <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} domain={ratingDomain} />
+                  <ReferenceLine 
+                    y={avgScore} 
+                    stroke="#10b981" 
+                    strokeDasharray="3 3" 
+                  />
                   <Tooltip content={<CustomTooltip />} />
                   <Line name="Win+Draw/2" type="monotone" dataKey="wr" stroke="#ec4899" strokeWidth={3} dot={{ fill: '#ec4899', r: 4 }} />
                   <Line name="Win Only" type="monotone" dataKey="win" stroke="#dddddd" strokeWidth={2} strokeDasharray="5 5" dot={{ fill: '#ffffff', r: 3, strokeDasharray: 0 }} />
@@ -248,7 +297,6 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
             </div>
           </div>
 
-          {/* 2. 시간대별 승률 */}
           <div className="bg-zinc-900/30 border border-white/5 p-8 rounded-[2rem]">
             <h3 className="text-[11px] text-zinc-500 uppercase tracking-[0.3em] font-bold mb-8 flex items-center gap-2">
               <BarChart2 size={14} className="text-pink-400" /> Win Rate by Speed
@@ -264,7 +312,12 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                   <XAxis dataKey="name" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
+                  <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} domain={timeDomain} />
+                  <ReferenceLine 
+                    y={avgScore} 
+                    stroke="#10b981" 
+                    strokeDasharray="3 3" 
+                  />
                   <Tooltip content={<CustomTooltip />} />
                   <Area name="Win+Draw/2" type="monotone" dataKey="wr" stroke="#ec4899" fillOpacity={1} fill="url(#colorWr)" strokeWidth={3} />
                   <Area name="Win Only" type="monotone" dataKey="win" stroke="#dddddd" fill="transparent" strokeWidth={2} strokeDasharray="5 5" />

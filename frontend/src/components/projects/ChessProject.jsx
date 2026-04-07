@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ChevronLeft, ChevronRight, ChessKing, Search, X } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, ChessKing, TrendingUp, Search, X } from 'lucide-react';
 import axios from 'axios';
 import ChessOpeningDetail from './ChessOpeningDetail';
 
@@ -10,6 +10,8 @@ const ChessProject = ({ onBack }) => {
   const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [color, setColor] = useState("white");
+  const [sortBy, setSortBy] = useState('games');
+  const [ascending, setAscending] = useState(false);
   const [selectedOpening, setSelectedOpening] = useState(null);
 
   const pageSize = 15;
@@ -23,8 +25,8 @@ const ChessProject = ({ onBack }) => {
           columns: "all",
           limit: pageSize,
           offset: currentPage * pageSize,
-          sortby: "games",
-          ascending: false,
+          sortby: sortBy,
+          ascending: ascending,
           color: color,
           search: searchTerm
         });
@@ -37,7 +39,7 @@ const ChessProject = ({ onBack }) => {
       }
     };
     fetchData();
-  }, [currentPage, searchTerm, color]);
+  }, [currentPage, searchTerm, color, sortBy, ascending]);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -92,20 +94,51 @@ const ChessProject = ({ onBack }) => {
         </h3>
 
         <div className="mt-12 flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* color toggle button */}
-          <button
-            onClick={toggleColor}
-            className={`group w-14 h-14 flex items-center justify-center rounded-2xl border transition-all duration-300 relative ${
-              color === 'white'
-              ? 'bg-white text-black border-zinc-200 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:bg-zinc-100'
-              : 'bg-zinc-900 text-white border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.5)] hover:bg-zinc-700'
-            }`}
-          >
-            <ChessKing 
-              size={27} 
-              className="transition-transform duration-300 group-active:scale-90"
-            />
-          </button>
+          <div className="flex items-center gap-8 w-full md:w-auto">
+            {/* color toggle button */}
+            <button
+              onClick={toggleColor}
+              className={`group w-14 h-14 flex items-center justify-center rounded-2xl border transition-all duration-300 relative ${
+                color === 'white'
+                ? 'bg-white text-black border-zinc-200 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:bg-zinc-100'
+                : 'bg-zinc-900 text-white border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.5)] hover:bg-zinc-700'
+              }`}
+            >
+              <ChessKing 
+                size={27} 
+                className="transition-transform duration-300 group-active:scale-90"
+              />
+            </button>
+
+            {/* sort */}
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-mono text-zinc-200 uppercase tracking-widest opacity-60">Sorted by</span>
+              <div className="flex items-center gap-3">
+                <select 
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="bg-transparent text-zinc-200 text-sm font-bold outline-none cursor-pointer hover:text-white transition-colors appearance-none pr-4"
+                  style={{ backgroundImage: 'none' }}
+                >
+                  <option value="games" className="bg-zinc-900">Games Count</option>
+                  <option value="score_rate" className="bg-zinc-900">Win Rate</option>
+                  <option value="draws_rate" className="bg-zinc-900">Draw Rate</option>
+                  <option value="average_rating" className="bg-zinc-900">Avg Rating</option>
+                </select>
+                
+                <button 
+                  onClick={() => setAscending(!ascending)}
+                  className="text-zinc-500 hover:text-pink-400 transition-colors p-1"
+                  title={ascending ? "Ascending" : "Descending"}
+                >
+                  <TrendingUp 
+                    size={16} 
+                    className={`transition-transform duration-300 ${ascending ? 'rotate-0' : 'rotate-180 flip-y'}`} 
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
           
           {/* search bar */}
           <div className="relative w-full md:w-96">
