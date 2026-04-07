@@ -21,7 +21,7 @@ PATH = "./backend/models/mnist.pth"
 
 model = CNN()
 lossfunc = nn.CrossEntropyLoss()
-optimizer = optim.SGD(model.parameters(), lr=LR)
+optimizer = optim.Adam(model.parameters(), lr=LR)
 
 loss_values = []
 acc_values = []
