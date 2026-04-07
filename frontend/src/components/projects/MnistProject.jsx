@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { ArrowLeft, RotateCcw, Play, Loader2 } from 'lucide-react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const MnistProject = ({ onBack }) => {
   const canvasRef = useRef(null);
