@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { ArrowLeft, RotateCcw, Play, Loader2 } from 'lucide-react';
 import axios from 'axios';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const MnistProject = ({ onBack }) => {
   const canvasRef = useRef(null);
@@ -57,7 +56,7 @@ const MnistProject = ({ onBack }) => {
     const imageBase64 = canvas.toDataURL('image/png');
 
     try {
-      const response = await axios.post(`${API_URL}/predict/mnist`, {
+      const response = await axios.post(`${API_URL}/api/mnist`, {
         image: imageBase64
       });
       setPrediction(response.data.digit);

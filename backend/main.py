@@ -9,11 +9,16 @@ from fastapi import FastAPI, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Union
 
-from dev.mnist.model import CNN
+import json
 df_chess_white = pd.read_csv("./db/chess/db_white_processed.csv")
 df_chess_black = pd.read_csv("./db/chess/db_black_processed.csv")
+with open("./db/chess/trie_white.json", "r") as f:
+    trie_white = json.load(f)
+with open("./db/chess/trie_black.json", "r") as f:
+    trie_black = json.load(f)  
 
 # load models
+from dev.mnist.model import CNN
 mnist = CNN()
 mnist.load_state_dict(torch.load("./models/mnist.pth", weights_only=True))
 mnist.eval()
@@ -34,11 +39,11 @@ app.add_middleware(
 )
 
 @app.get("/")
-def read_root():
+def get_root():
     return {"message": "FastAPI server is running!"}
 
-@app.post("/predict/mnist")
-async def predict_mnist(data: dict = Body(...)):
+@app.post("/api/mnist")
+async def mnist_predict(data: dict = Body(...)):
     image_data = data['image'].split(',')[1]
     image_bytes = base64.b64decode(image_data)
     img = Image.open(io.BytesIO(image_bytes))
@@ -56,7 +61,7 @@ async def predict_mnist(data: dict = Body(...)):
 
 
 @app.post("/api/chess/query")
-async def query_chess_data(
+async def chess_query(
     columns: Union[List[str], str] = Body(default=["name", "ECO", "white", "draws", "black"]),
     limit: int = Body(default=50),
     offset: int = Body(default=0),

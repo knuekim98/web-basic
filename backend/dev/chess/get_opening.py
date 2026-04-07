@@ -66,6 +66,10 @@ def get_trie(moves):
 
 trie_white = get_trie(moves_white)
 trie_black = get_trie(moves_black)
+with open("./backend/db/chess/trie_white.json", "w") as f:
+    json.dump(trie_white, f, indent=4)
+with open("./backend/db/chess/trie_black.json", "w") as f:
+    json.dump(trie_black, f, indent=4)
 
 def get_data(url):
     res = requests.get(url, headers={"Authorization": f"Bearer {TOKEN}"})
@@ -96,5 +100,5 @@ def select_opening(moves, opening_original, fn):
         json.dump(opening, f, indent=4)
     print(f"succeed to get opening lists for {fn}")
 
-select_opening(moves_white, opening_white, "white")
+#select_opening(moves_white, opening_white, "white")
 #select_opening(moves_black, opening_black, "black")
