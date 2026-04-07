@@ -184,7 +184,8 @@ const ChessProject = ({ onBack }) => {
                       <div className="flex flex-col gap-2 max-w-full">
                         <span 
                           onClick={() => setSelectedOpening(opening)}
-                          className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors leading-tight truncate"
+                          className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors leading-tight truncate block w-110"
+                          title={opening.name}
                         >
                           {opening.name}
                         </span>
@@ -236,7 +237,7 @@ const ChessProject = ({ onBack }) => {
                     {/* Move Sequence */}
                     <td className="p-8 overflow-hidden">
                       <div className="bg-black/30 px-4 py-3 rounded-lg border border-white/5 max-w-full">
-                        <p className="text-xs font-mono text-zinc-500 truncate italic" title={opening.moves}>
+                        <p className="text-xs font-mono text-zinc-400 truncate italic" title={opening.moves}>
                           {opening.moves}
                         </p>
                       </div>
