@@ -22,6 +22,65 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
+const metrics_config = {
+  sharpness: { label: "Sharpness", left: "Solid", right: "Sharp", color: "text-orange-400", bgColor: "bg-orange-400" },
+  elo_sensitivity: { label: "Elo Sensitivity", left: "Trap", right: "Robust", color: "text-blue-400", bgColor: "bg-blue-400" },
+  time_pressure_advantage: { label: "Time Control Advantage", left: "Classical", right: "Blitz", color: "text-purple-400", bgColor: "bg-purple-400" },
+  popularity: { label: "Popularity", left: "Rare", right: "Famous", color: "text-emerald-400", bgColor: "bg-emerald-400" }
+};
+
+const MetricSlider = ({ value, config, isZScore = true }) => {
+  let percentage;
+  let leftPos = "50%";
+  let barWidth = "0%";
+  if (isZScore) {
+    percentage = ((value + 2.5) / 5) * 100;
+    percentage = Math.max(0, Math.min(100, percentage));
+    if (value >= 0) {
+      leftPos = "50%";
+      barWidth = `${Math.min(50, percentage - 50)}%`;
+    } else {
+      leftPos = `${Math.max(0, percentage)}%`;
+      barWidth = `${50 - Math.max(0, percentage)}%`;
+    }
+  } else {
+    percentage = value * 100;
+    leftPos = "0%";
+    barWidth = `${value*100}%`;
+  }
+
+  return (
+    <div className="flex flex-col gap-2 w-full">
+      <div className="flex justify-between items-end">
+        <span className="text-[12px] font-mono text-zinc-200 uppercase tracking-widest">{config.label}</span>
+        <span className={`text-xs font-bold font-mono ${config.color}`}>
+          {isZScore ? (value > 0 ? `+${value.toFixed(2)}` : value.toFixed(2)) : `${(value * 100).toFixed(1)}%`}
+        </span>
+      </div>
+      
+      <div className="relative h-2 w-full bg-zinc-900 rounded-full border border-white/5 overflow-hidden">
+        
+        {/* slider chart */}
+        {isZScore && (
+          <div className="absolute left-1/2 top-0 w-[2px] h-full bg-zinc-600/50 z-20 -translate-x-1/2" />
+        )}
+        <div 
+          className={`absolute top-0 h-full transition-all duration-700 ease-out z-10 ${config.bgColor} shadow-[0_0_10px_rgba(255,255,255,0.1)]`}
+          style={{ 
+            left: leftPos,
+            width: barWidth
+          }}
+        />
+      </div>
+
+      <div className="flex justify-between text-[9px] font-black text-zinc-600 uppercase tracking-tighter mt-1">
+        <span className={isZScore ? (value < 0 ? "text-zinc-400" : "") : (value < 0.5 ? "text-zinc-400" : "")}>{config.left}</span>
+        <span className={isZScore ? (value > 0 ? "text-zinc-400" : "") : (value >= 0.5 ? "text-zinc-400" : "")}>{config.right}</span>
+      </div>
+    </div>
+  );
+};
+
 const ChessOpeningDetail = ({ opening, color, onBack }) => {
 
   const totalGames = {white: 494, black: 411}
@@ -113,7 +172,7 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
         </button>
 
         <div className="flex flex-col lg:flex-row gap-16 items-start mb-20">
-          {/* 1. 체스 보드 영역 (React-Chessboard) */}
+          {/* chessboard */}
           <div className="w-full lg:w-[450px] shrink-0">
             <div className="aspect-square rounded-xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/5">
               <Chessboard 
@@ -126,7 +185,7 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
             </div>
           </div>
 
-          {/* 오프닝 정보 */}
+          {/* general info */}
           <div className="flex-1 flex flex-col gap-8">
             <div>
               <span className="text-emerald-500 font-mono text-sm tracking-widest uppercase mb-2 block">{opening.ECO}</span>
@@ -138,7 +197,6 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
               </div>
             </div>
 
-            {/* 통계 카드 */}
             <div className="grid grid-cols-2 gap-6">
               <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5">
                 <p className="text-zinc-500 text-[10px] uppercase tracking-widest mb-1">Avg Rating</p>
@@ -150,7 +208,6 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
               </div>
             </div>
             
-            {/* 승률 바 */}
             <div className="flex flex-col gap-4">
               <p className="text-zinc-500 text-[10px] uppercase tracking-widest">Performance</p>
               <div className="flex h-6 w-full rounded-full overflow-hidden bg-zinc-800 ring-1 ring-white/10">
@@ -272,7 +329,7 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
 
 
         {/* rating & speed chart */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 mb-12 gap-10">
           
           <div className="bg-zinc-900/30 border border-white/5 p-8 rounded-[2rem]">
             <h3 className="text-[11px] text-zinc-500 uppercase tracking-[0.3em] font-bold mb-8 flex items-center gap-2">
@@ -326,6 +383,19 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
             </div>
           </div>
         </div>
+        
+        <div className="grid gap-10">
+          <div className="bg-zinc-900/30 border border-white/5 p-8 rounded-[2rem] mb-12">
+            <h3 className="text-[13px] text-zinc-500 uppercase tracking-[0.3em] font-bold mb-8">Insights</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-10">
+              <MetricSlider value={opening.sharpness} config={metrics_config.sharpness} />
+              <MetricSlider value={opening.elo_sensitivity} config={metrics_config.elo_sensitivity} />
+              <MetricSlider value={opening.time_pressure_advantage} config={metrics_config.time_pressure_advantage} />
+              <MetricSlider value={opening.popularity} config={metrics_config.popularity} isZScore={false} />
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

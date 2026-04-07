@@ -57,16 +57,21 @@ def preprocess(fn):
     # get elo sensitivity
     ES_TARGET_RATINGS = [1200, 1400, 1600, 1800, 2000, 2200]
     ES_X = np.array(ES_TARGET_RATINGS).reshape(-1, 1)
+    rating_avg = [np.sum(df[f"{r}_score_rate"]*df[f"{r}_games"])/df[f"{r}_games"].sum() for r in ES_TARGET_RATINGS]
     slopes = []
     for _ , row in df.iterrows():
-        y = [row[f"{r}_score_rate"] for r in ES_TARGET_RATINGS]
+        y = [row[f"{r}_score_rate"] - rating_avg[i] for i, r in enumerate(ES_TARGET_RATINGS)]
         slopes.append(LinearRegression().fit(ES_X, y).coef_[0])
     df["elo_sensitivity"] = slopes
     df["elo_sensitivity"] = StandardScaler().fit_transform(df["elo_sensitivity"].values.reshape(-1, 1))
 
     # get time pressure advantage
-    df["time_pressure_advantage"] = (df["bullet_score_rate"]*df["bullet_games"] + df["blitz_score_rate"]*df["blitz_games"])/(df["bullet_games"]+df["blitz_games"]) -\
-                                    (df["rapid_score_rate"]*df["rapid_games"] + df["classical_score_rate"]*df["classical_games"])/(df["rapid_games"]+df["classical_games"])
+    bullet_avg = np.sum(df["bullet_score_rate"]*df["bullet_games"])/df["bullet_games"].sum()
+    blitz_avg = np.sum(df["blitz_score_rate"]*df["blitz_games"])/df["blitz_games"].sum()
+    rapid_avg = np.sum(df["rapid_score_rate"]*df["rapid_games"])/df["rapid_games"].sum()
+    classical_avg = np.sum(df["classical_score_rate"]*df["classical_games"])/df["classical_games"].sum()
+    df["time_pressure_advantage"] = ((df["bullet_score_rate"]-bullet_avg)*df["bullet_games"] + (df["blitz_score_rate"]-blitz_avg)*df["blitz_games"])/(df["bullet_games"]+df["blitz_games"]) -\
+                                    ((df["rapid_score_rate"]-rapid_avg)*df["rapid_games"] + (df["classical_score_rate"]-classical_avg)*df["classical_games"])/(df["rapid_games"]+df["classical_games"])
     df["time_pressure_advantage"] = StandardScaler().fit_transform(df["time_pressure_advantage"].values.reshape(-1, 1))
 
     df.to_csv(f"./backend/db/chess/db_{fn}_processed.csv", na_rep="NaN", encoding="utf-8", index=False)
