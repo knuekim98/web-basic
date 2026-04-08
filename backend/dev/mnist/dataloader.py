@@ -9,7 +9,7 @@ train_data = datasets.MNIST(
     train=True,
     download=True,
     transform=Compose([
-        RandomRotation(degrees=(-30, 30) ,fill=0),
+        RandomRotation(degrees=(-30, 30), fill=0),
         ToTensor()
     ])
 )

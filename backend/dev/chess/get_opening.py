@@ -91,14 +91,16 @@ def select_opening(moves, opening_original, fn):
         if games >= 1000000:
             opening[fen] = opening_original[fen]
             # remove parent
+            '''
             if fen in parent:
                 p = parent[fen]
                 if p in opening: del opening[p]
+            '''
             print("selected: ", opening[fen]["name"], opening[fen]["moves"], i, len(opening))
     
     with open(f"./backend/datasets/chess/eco_{fn}_selected.json", "w") as f:
         json.dump(opening, f, indent=4)
     print(f"succeed to get opening lists for {fn}")
 
-#select_opening(moves_white, opening_white, "white")
+select_opening(moves_white, opening_white, "white")
 #select_opening(moves_black, opening_black, "black")

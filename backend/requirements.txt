@@ -3,6 +3,8 @@ uvicorn
 Pillow
 numpy
 pandas
+python-dotenv
+httpx
 
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch

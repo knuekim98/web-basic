@@ -9,6 +9,13 @@ from fastapi import FastAPI, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Union
 
+import os
+from dotenv import load_dotenv
+import httpx
+load_dotenv("./dev/chess/.env.chess")
+TOKEN = os.environ.get("API_TOKEN")
+
+
 import json
 df_chess_white = pd.read_csv("./db/chess/db_white_processed.csv")
 df_chess_black = pd.read_csv("./db/chess/db_black_processed.csv")
@@ -16,6 +23,15 @@ with open("./db/chess/trie_white.json", "r") as f:
     trie_white = json.load(f)
 with open("./db/chess/trie_black.json", "r") as f:
     trie_black = json.load(f)  
+
+def moves_formatting(moves_list):
+    moves_formatted  = []
+    for i, move in enumerate(moves_list):
+        if i&1==0: moves_formatted.append(f"{(i//2)+1}.{move}")
+        else: moves_formatted.append(move)
+    moves_formatted = " ".join(moves_formatted)
+    return moves_formatted
+
 
 # load models
 from dev.mnist.model import CNN
@@ -92,3 +108,41 @@ async def chess_query(
         "total_count": len(df),
         "data": data
     }
+
+from collections import Counter
+@app.get("/api/chess/user/{username}")
+async def chess_user_query(username):
+    url = f"https://lichess.org/api/games/user/{username}?max=5&rated=true&perfType=bullet,blitz,rapid,classical"
+    c =Counter()
+    games = []
+    async with httpx.AsyncClient() as client:
+        async with client.stream("GET", url, headers={"Authorization": f"Bearer {TOKEN}", "Accept": "application/x-ndjson"}) as res:
+            if res.status_code != 200:
+                raise HTTPException(status_code=res.status_code, detail="Lichess API error")
+            
+            async for line in res.aiter_lines():
+                data = json.loads(line)
+                if data["variant"] != "standard": continue
+                game = {
+                    "speed": data["perf"],
+                    "result": data["winner"] if "winner" in data else "draws",
+                    "me": "white" if data["players"]["white"]["user"]["name"]==username else "black",
+                }
+                search_df = df_chess_white if game["me"] == "white" else df_chess_black
+                
+                # search opening
+                moves_list = data["moves"].split()
+                depth_max = 11 if game["me"] == "white" else 12
+                for depth in range(depth_max, 4, -2):
+                    target = moves_formatting(moves_list[:depth])
+                    print(target)
+                    match = search_df[search_df["moves"] == target]
+                    if not match.empty:
+                        game["opening"] = match.iloc[0].to_dict()
+                        break
+                if "opening" in game:
+                    c[game["opening"]["name"]] += 1
+                    games.append(game)
+
+    print(len(games))
+    print(c)
