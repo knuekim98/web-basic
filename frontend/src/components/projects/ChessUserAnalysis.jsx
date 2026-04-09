@@ -69,12 +69,14 @@ const ChessUserAnalysis = ({ username, onBack, onSelectOpening }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         <RepertoireSection 
           title="White Repertoire" 
-          openings={whiteRepertoire}
+          openings={whiteRepertoire} 
+          onSelectOpening={onSelectOpening} 
           myColor="white" 
         />
         <RepertoireSection 
           title="Black Repertoire" 
-          openings={blackRepertoire}
+          openings={blackRepertoire} 
+          onSelectOpening={onSelectOpening} 
           myColor="black" 
         />
       </div>
@@ -83,7 +85,7 @@ const ChessUserAnalysis = ({ username, onBack, onSelectOpening }) => {
 };
 
 // 리퍼토리 섹션 컴포넌트
-const RepertoireSection = ({ title, openings, myColor }) => (
+const RepertoireSection = ({ title, openings, myColor, onSelectOpening }) => (
   <div className="space-y-6">
     <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-[0.3em] flex items-center gap-3">
       <span className={`w-2 h-2 rounded-full ${myColor === 'white' ? 'bg-white' : 'bg-zinc-700'}`} />
@@ -92,7 +94,11 @@ const RepertoireSection = ({ title, openings, myColor }) => (
     <div className="grid gap-4">
       {openings.length > 0 ? (
         openings.map((op) => (
-          <div key={op.id}>
+          <div 
+            key={op.id} 
+            onClick={() => onSelectOpening(Number(op.id))} // ID 전달
+            className="cursor-pointer"
+          >
             <OpeningStatCard op={op} myColor={myColor} />
           </div>
         ))
