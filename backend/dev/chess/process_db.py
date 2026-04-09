@@ -76,7 +76,8 @@ def preprocess(fn):
                                     ((df["rapid_score_rate"]-rapid_avg)*df["rapid_games"] + (df["classical_score_rate"]-classical_avg)*df["classical_games"])/(df["rapid_games"]+df["classical_games"])
     df["time_pressure_advantage"] = StandardScaler().fit_transform(df["time_pressure_advantage"].values.reshape(-1, 1))
 
-    df.to_csv(f"./backend/db/chess/db_{fn}_processed.csv", na_rep="NaN", encoding="utf-8", index=False)
+    df.reindex()
+    df.to_csv(f"./backend/db/chess/db_{fn}_processed.csv", na_rep="NaN", encoding="utf-8", index=True, index_label="id")
     with open(f"./backend/db/chess/stats_{fn}.json", "w") as f:
         json.dump(stats, f)
     print(f"--- processed: {fn} ---")

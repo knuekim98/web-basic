@@ -1,10 +1,11 @@
-import React from 'react';
-import { ArrowLeft, BarChart2, TrendingUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, BarChart2, TrendingUp, Loader2 } from 'lucide-react';
 import { Chessboard } from 'react-chessboard';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   AreaChart, Area, ReferenceLine, BarChart, Bar
 } from 'recharts';
+import axios from 'axios';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -81,7 +82,34 @@ const MetricSlider = ({ value, config, isZScore = true }) => {
   );
 };
 
-const ChessOpeningDetail = ({ opening, color, stats, onBack }) => {
+const ChessOpeningDetail = ({ opening_id, color, stats, onBack }) => {
+
+  const [opening, setOpening] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const API_URL = import.meta.env.VITE_API_URL;
+    const fetchDetail = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.post(`${API_URL}/api/chess/opening`, {
+          opening_id: opening_id,
+          color: color
+        });
+        setOpening(response.data);
+      } catch (error) {
+        console.error("Fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDetail();
+  }, [opening_id, color]);
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <Loader2 className="animate-spin text-emerald-500" size={48} />
+    </div>
+  );
 
   const totalGames = {white: stats.white.total, black: stats.black.total}
   const avgScore = color === 'white' ? stats.white.avg_score_rate : stats.black.avg_score_rate;

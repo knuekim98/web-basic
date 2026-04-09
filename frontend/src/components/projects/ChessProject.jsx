@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ChevronLeft, ChevronRight, ChessKing, TrendingUp, Search, X } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, ChessKing, TrendingUp, Search, X, Lightbulb } from 'lucide-react';
 import axios from 'axios';
 import ChessOpeningDetail from './ChessOpeningDetail';
+import ChessUserSearch from './ChessUserSearch';
 
 const ChessProject = ({ onBack }) => {
   const [data, setData] = useState([]);
@@ -12,7 +13,9 @@ const ChessProject = ({ onBack }) => {
   const [color, setColor] = useState("white");
   const [sortBy, setSortBy] = useState('games');
   const [ascending, setAscending] = useState(false);
+
   const [selectedOpening, setSelectedOpening] = useState(null);
+  const [showUserSearch, setShowUserSearch] = useState(false);
 
   const [statsData, setStatsData] = useState({});
   const pageSize = 15;
@@ -23,7 +26,7 @@ const ChessProject = ({ onBack }) => {
       setLoading(true);
       try {
         const response = await axios.post(`${API_URL}/api/chess/query`, {
-          columns: "all",
+          columns: ["id", "name", "ECO", "moves", "games", "white_rate", "draws_rate", "black_rate"],
           limit: pageSize,
           offset: currentPage * pageSize,
           sortby: sortBy,
@@ -86,10 +89,21 @@ const ChessProject = ({ onBack }) => {
   if (selectedOpening) {
     return (
       <ChessOpeningDetail 
-        opening={selectedOpening}
+        opening_id={selectedOpening}
         color={color}
         stats={statsData}
         onBack={() => setSelectedOpening(null)} 
+      />
+    );
+  }
+  if (showUserSearch) {
+    return (
+      <ChessUserSearch
+        onBack={() => setShowUserSearch(false)}
+        onSelectOpening={(id) => {
+          setSelectedOpening(id);
+          setShowUserSearch(false);
+        }}
       />
     );
   }
@@ -98,9 +112,18 @@ const ChessProject = ({ onBack }) => {
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-200 p-6 md:p-16 font-sans">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-10">
-        <button onClick={onBack} className="flex items-center gap-2 text-zinc-500 hover:text-white mb-6 transition-colors text-sm uppercase tracking-widest">
-          <ArrowLeft size={18} /> Back to Dashboard
-        </button>
+        <div className="flex justify-between items-start mb-10">
+          <button onClick={onBack} className="flex items-center gap-2 text-zinc-500 hover:text-white mb-6 transition-colors text-sm uppercase tracking-widest">
+            <ArrowLeft size={18} /> Back to Dashboard
+          </button>
+
+          <button 
+            onClick={() => setShowUserSearch(true)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 hover:bg-emerald-500/20 transition-all font-bold text-sm"
+          >
+            <Search size={16} /> Analyze Player
+          </button>
+        </div>
 
         <h1 className="text-5xl font-black text-white tracking-tighter italic">
           CHESS OPENINGS <span className="text-zinc-700">EXPLORER</span>
@@ -201,7 +224,7 @@ const ChessProject = ({ onBack }) => {
                     <td className="p-8 overflow-hidden">
                       <div className="flex flex-col gap-2 max-w-full">
                         <span 
-                          onClick={() => setSelectedOpening(opening)}
+                          onClick={() => setSelectedOpening(opening.id)}
                           className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors leading-tight truncate block w-110"
                           title={opening.name}
                         >

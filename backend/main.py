@@ -82,7 +82,7 @@ async def mnist_predict(data: dict = Body(...)):
 
 @app.post("/api/chess/query")
 async def chess_query(
-    columns: Union[List[str], str] = Body(default=["name", "ECO", "white", "draws", "black"]),
+    columns: Union[List[str], str] = Body(default="all"),
     limit: int = Body(default=50),
     offset: int = Body(default=0),
     sortby: str = Body(default="games"),
@@ -114,6 +114,14 @@ async def chess_query(
     }
 
 
+@app.post("/api/chess/opening")
+async def chess_opening(opening_id: int = Body(...), color: str = Body(default="white")):
+    df = df_chess_white if color=="white" else df_chess_black
+    res = df[df["id"] == opening_id]
+    if res.empty: raise HTTPException(status_code=404, detail="Opening not found")
+    return res.iloc[0].to_dict()
+
+
 @app.get("/api/chess/stats")
 async def chess_stats():
     return {
@@ -122,11 +130,9 @@ async def chess_stats():
     }
 
 
-from collections import Counter
-@app.get("/api/chess/user/{username}")
-async def chess_user_query(username):
+@app.post("/api/chess/user")
+async def chess_user_query(username: str = Body(..., embed=True)):
     url = f"https://lichess.org/api/games/user/{username}?max=200&rated=true&perfType=bullet,blitz,rapid,classical"
-    c =Counter()
     games = []
     async with httpx.AsyncClient() as client:
         async with client.stream("GET", url, headers={"Authorization": f"Bearer {TOKEN}", "Accept": "application/x-ndjson"}) as res:
@@ -144,18 +150,27 @@ async def chess_user_query(username):
                 search_df = df_chess_white if game["me"] == "white" else df_chess_black
                 
                 # search opening
+                game["opening"] = []
                 moves_list = data["moves"].split()
                 depth_max = 11 if game["me"] == "white" else 12
                 for depth in range(depth_max, 4, -2):
                     target = moves_formatting(moves_list[:depth])
-                    print(target)
                     match = search_df[search_df["moves"] == target]
                     if not match.empty:
-                        game["opening"] = match.iloc[0].to_dict()
-                        break
-                if "opening" in game:
-                    c[game["opening"]["name"]] += 1
-                    games.append(game)
+                        game["opening"].append(match.iloc[0].to_dict())
+                games.append(game)
 
-    print(len(games))
-    print(c)
+    # processing games data
+    opening_result = {"white":{}, "black":{}}
+    for game in games:
+        for opening in game["opening"]:
+            if opening["id"] not in opening_result[game["me"]]: 
+                opening_result[game["me"]][opening["id"]] = {
+                    "name": opening["name"],
+                    "white":0, "draws":0, "black":0
+                }
+            opening_result[game["me"]][opening["id"]][game["result"]] += 1
+    
+    return {
+        "opening_result": opening_result
+    }
