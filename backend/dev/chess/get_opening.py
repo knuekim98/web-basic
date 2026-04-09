@@ -102,5 +102,6 @@ def select_opening(moves, opening_original, fn):
         json.dump(opening, f, indent=4)
     print(f"succeed to get opening lists for {fn}")
 
-select_opening(moves_white, opening_white, "white")
-#select_opening(moves_black, opening_black, "black")
+x = input("select color to update(w/b/wb): ")
+if 'w' in x: select_opening(moves_white, opening_white, "white")
+if 'b' in x: select_opening(moves_black, opening_black, "black")

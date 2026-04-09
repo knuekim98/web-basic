@@ -3,12 +3,14 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import matplotlib.pyplot as plt
+import json
 
 RATINGS = [0,1000,1200,1400,1600,1800,2000,2200,2500]
 SPEEDS = ["bullet","blitz","rapid","classical"]
 
 def preprocess(fn):
     df = pd.read_csv(f"./backend/db/chess/db_{fn}_selected.csv", encoding="utf-8")
+    stats = {"total": df.shape[0]}
 
     # get white/draws/black rate
     df["games"] = df["white"] + df["draws"] + df["black"]
@@ -32,14 +34,14 @@ def preprocess(fn):
     df["score_rate"] = (df[fn] + df["draws"]/2) / df["games"] * 100
     df["score_rate_rank"] = df["score_rate"].rank(ascending=False, method='min').astype(int)
     df["draws_rate_rank"] = df["draws_rate"].rank(ascending=False, method='min').astype(int)
-    print("avg score_rate:", (df["score_rate"]*df["games"]).sum() / df["games"].sum())
+    stats[f"avg_score_rate"] = (df["score_rate"]*df["games"]).sum() / df["games"].sum()
 
     df["score_rate_hist"] = ((df["score_rate"] - 20) / 2).astype(int)
     df["draws_rate_hist"] = (df["draws_rate"] * 3).astype(int)
-    score_hist, _ = np.histogram(df['score_rate'], bins=30, range=(20, 80))
-    draws_hist, _ = np.histogram(df['draws_rate'], bins=30, range=(0, 10))
-    print(score_hist)
-    print(draws_hist)
+    score_hist, _ = np.histogram(df['score_rate'], bins=31, range=(20, 80))
+    draws_hist, _ = np.histogram(df['draws_rate'], bins=31, range=(0, 10))
+    stats[f"score_hist"] = score_hist.tolist()
+    stats[f"draws_hist"] = draws_hist.tolist()
     
     # get selection rate/rank
     df["selection_rate"] = df['games'] / df["games"].sum() * 100
@@ -75,6 +77,8 @@ def preprocess(fn):
     df["time_pressure_advantage"] = StandardScaler().fit_transform(df["time_pressure_advantage"].values.reshape(-1, 1))
 
     df.to_csv(f"./backend/db/chess/db_{fn}_processed.csv", na_rep="NaN", encoding="utf-8", index=False)
+    with open(f"./backend/db/chess/stats_{fn}.json", "w") as f:
+        json.dump(stats, f)
     print(f"--- processed: {fn} ---")
 
 preprocess("white")

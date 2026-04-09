@@ -14,6 +14,7 @@ const ChessProject = ({ onBack }) => {
   const [ascending, setAscending] = useState(false);
   const [selectedOpening, setSelectedOpening] = useState(null);
 
+  const [statsData, setStatsData] = useState({});
   const pageSize = 15;
 
   useEffect(() => {
@@ -40,6 +41,22 @@ const ChessProject = ({ onBack }) => {
     };
     fetchData();
   }, [currentPage, searchTerm, color, sortBy, ascending]);
+
+  useEffect(() => {
+    const API_URL = import.meta.env.VITE_API_URL;
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get(`${API_URL}/api/chess/stats`);
+        setStatsData(response.data);
+      } catch (error) {
+        console.error("Fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -71,6 +88,7 @@ const ChessProject = ({ onBack }) => {
       <ChessOpeningDetail 
         opening={selectedOpening}
         color={color}
+        stats={statsData}
         onBack={() => setSelectedOpening(null)} 
       />
     );

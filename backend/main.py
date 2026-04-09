@@ -22,7 +22,11 @@ df_chess_black = pd.read_csv("./db/chess/db_black_processed.csv")
 with open("./db/chess/trie_white.json", "r") as f:
     trie_white = json.load(f)
 with open("./db/chess/trie_black.json", "r") as f:
-    trie_black = json.load(f)  
+    trie_black = json.load(f) 
+with open("./db/chess/stats_white.json", "r") as f:
+    stats_white = json.load(f)
+with open("./db/chess/stats_black.json", "r") as f:
+    stats_black = json.load(f) 
 
 def moves_formatting(moves_list):
     moves_formatted  = []
@@ -109,10 +113,19 @@ async def chess_query(
         "data": data
     }
 
+
+@app.get("/api/chess/stats")
+async def chess_stats():
+    return {
+        "white": stats_white,
+        "black": stats_black
+    }
+
+
 from collections import Counter
 @app.get("/api/chess/user/{username}")
 async def chess_user_query(username):
-    url = f"https://lichess.org/api/games/user/{username}?max=5&rated=true&perfType=bullet,blitz,rapid,classical"
+    url = f"https://lichess.org/api/games/user/{username}?max=200&rated=true&perfType=bullet,blitz,rapid,classical"
     c =Counter()
     games = []
     async with httpx.AsyncClient() as client:

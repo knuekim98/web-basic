@@ -55,5 +55,6 @@ def make_db(opening, fn):
         print(i, line)
     print(f"succeed to get db of {fn}")
 
-make_db(opening_white, "white")
-#make_db(opening_black, "black")
+x = input("select color to update(w/b/wb): ")
+if 'w' in x: make_db(opening_white, "white")
+if 'b' in x: make_db(opening_black, "black")

@@ -81,21 +81,21 @@ const MetricSlider = ({ value, config, isZScore = true }) => {
   );
 };
 
-const ChessOpeningDetail = ({ opening, color, onBack }) => {
+const ChessOpeningDetail = ({ opening, color, stats, onBack }) => {
 
-  const totalGames = {white: 494, black: 411}
-  const avgScore = color === 'white' ? 52.0159 : 48.1595;
+  const totalGames = {white: stats.white.total, black: stats.black.total}
+  const avgScore = color === 'white' ? stats.white.avg_score_rate : stats.black.avg_score_rate;
   const scoreHistData = {
-    white: [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 6, 24, 70, 122, 145, 76, 29, 10, 3, 2, 1, 0, 1, 0, 0, 0, 0, 0],
-    black: [0, 0, 0, 0, 1, 0, 0, 1, 3, 10, 29, 50, 101, 106, 65, 33, 9, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0] 
+    white: stats.white.score_hist,
+    black: stats.black.score_hist
   };
   const drawsHistData = {
-    white: [0, 0, 0, 0, 0, 1, 0, 1, 4, 10, 21, 40, 46, 74, 86, 70, 53, 34, 19, 14, 14, 3, 3, 1, 0, 0, 0, 0, 0, 0, 0],
-    black: [0, 0, 0, 0, 0, 1, 0, 0, 6, 10, 14, 25, 44, 63, 59, 56, 44, 34, 20, 14, 12, 2, 5, 2, 0, 0, 0, 0, 0, 0, 0]
+    white: stats.white.draws_hist,
+    black: stats.black.draws_hist
   };
   const scoreDistData = scoreHistData[color].map((val, i) => ({ 
     count: val,
-    label: 22 + i*2
+    label: 20 + i*2
   }));
   const drawsDistData = drawsHistData[color].map((val, i) => ({ 
     count: val,
@@ -260,7 +260,7 @@ const ChessOpeningDetail = ({ opening, color, onBack }) => {
                                 tickLine={false} 
                                 axisLine={false} 
                                 stroke="#52525b" 
-                                interval={13}
+                                interval={14}
                                 padding={{left:5, right:5}}
                                 tickFormatter={(value) => `${value}%`}
                             />
