@@ -8,6 +8,7 @@ from PIL import Image
 from fastapi import FastAPI, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Union
+from pydantic import BaseModel
 
 import os
 from dotenv import load_dotenv
@@ -130,50 +131,43 @@ async def chess_stats():
     }
 
 
-@app.post("/api/chess/user")
-async def chess_user_query(username: str = Body(..., embed=True)):
-    async with httpx.AsyncClient() as client:
-        res = await client.get("https://www.google.com/")
-        print(res.status_code, res.text)
-    url = f"https://lichess.org/api/games/user/{username}?max=200&rated=true&perfType=bullet,blitz,rapid,classical"
-    games = []
-    async with httpx.AsyncClient(timeout=httpx.Timeout(None)) as client:
-        async with client.stream("GET", url, headers={"Authorization": f"Bearer {TOKEN}", "Accept": "application/x-ndjson", "User-Agent": "chess-web-basic project"}) as res:
-            if res.status_code != 200:
-                raise HTTPException(status_code=res.status_code, detail="Lichess API error")
-            
-            async for line in res.aiter_lines():
-                data = json.loads(line)
-                if data["variant"] != "standard": continue
-                game = {
-                    "speed": data["perf"],
-                    "result": data["winner"] if "winner" in data else "draws",
-                    "me": "white" if data["players"]["white"]["user"]["name"]==username else "black",
-                }
-                search_df = df_chess_white if game["me"] == "white" else df_chess_black
-                
-                # search opening
-                game["opening"] = []
-                moves_list = data["moves"].split()
-                depth_max = 11 if game["me"] == "white" else 12
-                for depth in range(depth_max, 4, -2):
-                    target = moves_formatting(moves_list[:depth])
-                    match = search_df[search_df["moves"] == target]
-                    if not match.empty:
-                        game["opening"].append(match.iloc[0].to_dict())
-                games.append(game)
+class AnalyzeRequest(BaseModel):
+    username: str
+    games: List[dict]
 
-    # processing games data
-    opening_result = {"white":{}, "black":{}}
-    for game in games:
-        for opening in game["opening"]:
-            if opening["id"] not in opening_result[game["me"]]: 
-                opening_result[game["me"]][opening["id"]] = {
-                    "name": opening["name"],
-                    "white":0, "draws":0, "black":0
-                }
-            opening_result[game["me"]][opening["id"]][game["result"]] += 1
+@app.post("/api/chess/analyze")
+async def chess_analyze(request_data: AnalyzeRequest):
+    username = request_data.username
+    games = request_data.games
+
+    processed_games = []
+    for data in games:
+        if data.get("variant") != "standard": continue
+        game = {
+            "speed": data["perf"],
+            "result": data.get("winner", "draws"),
+            "me": "white" if data["players"]["white"]["user"]["name"] == username else "black",
+        }
+        
+        search_df = df_chess_white if game["me"] == "white" else df_chess_black
+        game["opening"] = []
+        moves_list = data["moves"].split()
+        depth_max = 11 if game["me"] == "white" else 12
+        
+        for depth in range(depth_max, 4, -2):
+            target = moves_formatting(moves_list[:depth])
+            match = search_df[search_df["moves"] == target]
+            if not match.empty:
+                game["opening"].append(match.iloc[0].to_dict())
+        processed_games.append(game)
     
-    return {
-        "opening_result": opening_result
-    }
+    opening_result = {"white": {}, "black": {}}
+    for game in processed_games:
+        for opening in game["opening"]:
+            me = game["me"]
+            opening_id = opening["id"]
+            if opening_id not in opening_result[me]:
+                opening_result[me][opening_id] = {"name": opening["name"], "white": 0, "draws": 0, "black": 0}
+            opening_result[me][opening_id][game["result"]] += 1
+            
+    return {"opening_result": opening_result}

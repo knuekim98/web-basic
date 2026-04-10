@@ -15,10 +15,35 @@ const ChessUserAnalysis = () => {
     const fetchUserData = async () => {
       setLoading(true);
       try {
-        const response = await axios.post(`${API_URL}/api/chess/user`, { username: username });
+        const lichessUrl = `https://lichess.org/api/games/user/${username}?max=200&rated=true&perfType=bullet,blitz,rapid,classical`;
+        const res = await fetch(lichessUrl, {
+          headers: { 'Accept': 'application/x-ndjson' }
+        });
+        if (!res.ok) throw new Error("Lichess API access failed");
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let { value, done } = await reader.read();
+        let leftover = "";
+        const games = [];
+
+        while (!done) {
+          const chunk = leftover + decoder.decode(value, { stream: true });
+          const lines = chunk.split("\n");
+          leftover = lines.pop();
+          for (const line of lines) {
+            if (line.trim()) games.push(JSON.parse(line));
+          }
+          ({ value, done } = await reader.read());
+        }
+
+        const response = await axios.post(`${API_URL}/api/chess/analyze`, {
+          username: username,
+          games: games
+        });
         setData(response.data.opening_result);
       } catch (error) {
-        console.error("Error fetching user data:", error);
+        console.error("Analysis Error:", error);
       } finally {
         setLoading(false);
       }
