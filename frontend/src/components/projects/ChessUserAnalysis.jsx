@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, ExternalLink } from 'lucide-react';
 import axios from 'axios';
 
@@ -54,7 +54,7 @@ const ChessUserAnalysis = () => {
   return (
     <div className="max-w-7xl mx-auto py-12 px-6">
       <button 
-        onClick={() => navigate('/chess/search')}
+        onClick={() => navigate('/chess')}
         className="flex items-center gap-2 text-zinc-500 hover:text-white mb-10 transition-colors text-sm uppercase tracking-widest"
       >
         <ArrowLeft size={18} /> Back to List
@@ -88,7 +88,6 @@ const ChessUserAnalysis = () => {
 
 // 리퍼토리 섹션 컴포넌트
 const RepertoireSection = ({ title, openings, color }) => {
-  const navigate = useNavigate();
   return (
     <div className="space-y-6">
       <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-[0.3em] flex items-center gap-3">
@@ -98,13 +97,11 @@ const RepertoireSection = ({ title, openings, color }) => {
       <div className="grid gap-4">
         {openings.length > 0 ? (
           openings.map((op) => (
-            <div 
-              key={op.id} 
-              onClick={() => navigate(`/chess/opening?id=${op.id}&color=${color}`)}
-              className="cursor-pointer"
-            >
-              <OpeningStatCard op={op} myColor={color} />
-            </div>
+            <Link to={`/chess/opening?id=${op.id}&color=${color}`} target="_blank" rel="noopener noreferrer">
+              <div key={op.id} className="cursor-pointer">
+                <OpeningStatCard op={op} myColor={color} />
+              </div>
+            </Link>
           ))
         ) : (
           <div className="p-10 border border-dashed border-white/5 rounded-3xl text-center text-zinc-700 italic">
@@ -130,10 +127,7 @@ const OpeningStatCard = ({ op, myColor }) => {
     <div className="bg-zinc-900/40 border border-white/5 p-5 rounded-2xl hover:border-white/10 transition-all group">
       <div className="flex justify-between items-start mb-4">
         <div className="max-w-[70%]">
-          {/* 백엔드에서 name을 보냈다면 op.name 사용, 아니면 ID 표시 */}
-          <h4 className="text-white font-bold text-sm truncate group-hover:text-emerald-400 transition-colors">
-            {op.name || `Opening ID: ${op.id}`}
-          </h4>
+          <h4 className="text-white font-bold text-sm truncate group-hover:text-emerald-400 transition-colors">{op.name}</h4>
           <p className="text-[10px] text-zinc-500 font-mono mt-1 uppercase tracking-wider">{op.total} Games Played</p>
         </div>
         <div className="text-right">

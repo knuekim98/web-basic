@@ -222,23 +222,23 @@ const ChessOpeningDetail = () => {
           </div>
 
           {/* general info */}
-          <div className="flex-1 flex flex-col gap-8">
+          <div className="flex-1 flex flex-col gap-6 lg:gap-8">
             <div>
               <span className="text-emerald-500 font-mono text-sm tracking-widest uppercase mb-2 block">{opening.ECO}</span>
-              <h2 className="text-4xl font-black text-white leading-tight tracking-tighter mb-4">{opening.name}</h2>
+              <h2 className="text-3xl lg:text-4xl font-black text-white leading-tight tracking-tighter mb-4">{opening.name}</h2>
               <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                <p className="text-zinc-400 font-mono text-lg leading-relaxed italic">
+                <p className="text-zinc-400 font-mono lg:text-lg leading-relaxed italic">
                   {opening.moves}
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5">
+            <div className="grid grid-cols-2 gap-4 lg:gap-6">
+              <div className="bg-zinc-900/50 p-4 lg:p-6 rounded-2xl border border-white/5">
                 <p className="text-zinc-500 text-[10px] uppercase tracking-widest mb-1">Avg Rating</p>
                 <p className="text-2xl font-bold text-white">{Math.round(opening.average_rating)}</p>
               </div>
-              <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5">
+              <div className="bg-zinc-900/50 p-4 lg:p-6 rounded-2xl border border-white/5">
                 <p className="text-zinc-500 text-[10px] uppercase tracking-widest mb-1">Total Games</p>
                 <p className="text-2xl font-bold text-white">{opening.games.toLocaleString()}</p>
               </div>
@@ -365,10 +365,10 @@ const ChessOpeningDetail = () => {
 
 
         {/* rating & speed chart */}
-        <div className="grid grid-cols-1 md:grid-cols-2 mb-12 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 mb-12 gap-6 lg:gap-10">
           
-          <div className="bg-zinc-900/30 border border-white/5 p-8 rounded-[2rem]">
-            <h3 className="text-[11px] text-zinc-500 uppercase tracking-[0.3em] font-bold mb-8 flex items-center gap-2">
+          <div className="bg-zinc-900/30 border border-white/5 py-8 px-4 lg:px-8 rounded-[2rem]">
+            <h3 className="text-[11px] text-zinc-500 uppercase tracking-[0.3em] font-bold mb-8 pl-4 flex items-center gap-2">
               <TrendingUp size={14} className="text-pink-400" /> Win Rate by Rating
             </h3>
             <div className="h-64 w-full">
@@ -390,8 +390,8 @@ const ChessOpeningDetail = () => {
             </div>
           </div>
 
-          <div className="bg-zinc-900/30 border border-white/5 p-8 rounded-[2rem]">
-            <h3 className="text-[11px] text-zinc-500 uppercase tracking-[0.3em] font-bold mb-8 flex items-center gap-2">
+          <div className="bg-zinc-900/30 border border-white/5 py-8 px-4 lg:px-8 rounded-[2rem]">
+            <h3 className="text-[11px] text-zinc-500 uppercase tracking-[0.3em] font-bold mb-8 pl-4 flex items-center gap-2">
               <BarChart2 size={14} className="text-pink-400" /> Win Rate by Speed
             </h3>
             <div className="h-64 w-full">
@@ -421,7 +421,7 @@ const ChessOpeningDetail = () => {
         </div>
         
         <div className="grid gap-10">
-          <div className="bg-zinc-900/30 border border-white/5 p-8 rounded-[2rem] mb-12">
+          <div className="bg-zinc-900/30 border border-white/5 p-8 lg:p-10 rounded-[2rem] mb-12">
             <h3 className="text-[13px] text-zinc-500 uppercase tracking-[0.3em] font-bold mb-8">Insights</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-10">
               <MetricSlider value={opening.sharpness} config={metrics_config.sharpness} />

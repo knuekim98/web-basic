@@ -167,8 +167,8 @@ const ChessProject = () => {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-white/10 bg-white/[0.03]">
-                <th className="p-8 text-xs uppercase tracking-[0.2em] text-zinc-500 font-bold">Opening / Stats</th>
-                <th className="p-8 text-xs uppercase tracking-[0.2em] text-zinc-500 font-bold">Win Rate Distribution</th>
+                <th className="py-8 pl-8 text-xs uppercase tracking-[0.2em] text-zinc-500 font-bold">Opening / Stats</th>
+                <th className="py-8 px-2 text-xs uppercase tracking-[0.2em] text-zinc-500 font-bold">Win Rate Distribution</th>
                 <th className="p-8 text-xs uppercase tracking-[0.2em] text-zinc-500 font-bold">Move Sequence</th>
               </tr>
             </thead>
@@ -179,11 +179,11 @@ const ChessProject = () => {
                 return (
                   <tr key={idx} className="hover:bg-white/[0.02] transition-all group">
                     {/* Name & Total Games */}
-                    <td className="p-8 overflow-hidden">
+                    <td className="py-8 pl-8 pr-4 overflow-hidden">
                       <div className="flex flex-col gap-2 max-w-full">
                         <span 
                           onClick={() => navigate(`/chess/opening?id=${opening.id}&color=${color}`)}
-                          className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors leading-tight truncate block w-110"
+                          className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors leading-tight truncate block w-80 lg:w-110"
                           title={opening.name}
                         >
                           {opening.name}
@@ -198,7 +198,7 @@ const ChessProject = () => {
                     </td>
 
                     {/* Win Rate Bar */}
-                    <td className="p-8 w-80">
+                    <td className="py-8 px-2 w-80">
                       <div className="flex flex-col gap-3">
                         <div className="flex h-4 w-full rounded-full overflow-hidden bg-zinc-800 ring-1 ring-white/10">
                           {color === 'white' ? (
