@@ -132,7 +132,7 @@ async def chess_stats():
 
 @app.post("/api/chess/user")
 async def chess_user_query(username: str = Body(..., embed=True)):
-    url = f"https://lichess.org/api/games/user/{username}?max=200&rated=true&perfType=bullet,blitz,rapid,classical"
+    url = f"https://lichess.org/api/games/user/{username}?max=1&rated=true&perfType=bullet,blitz,rapid,classical"
     games = []
     async with httpx.AsyncClient(timeout=httpx.Timeout(None)) as client:
         async with client.stream("GET", url, headers={"Authorization": f"Bearer {TOKEN}", "Accept": "application/x-ndjson"}) as res:
