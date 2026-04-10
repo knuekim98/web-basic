@@ -134,7 +134,7 @@ async def chess_stats():
 async def chess_user_query(username: str = Body(..., embed=True)):
     url = f"https://lichess.org/api/games/user/{username}?max=200&rated=true&perfType=bullet,blitz,rapid,classical"
     games = []
-    async with httpx.AsyncClient(timeout=httpx.Timeout(20.0, connect=30.0)) as client:
+    async with httpx.AsyncClient(timeout=httpx.Timeout(None)) as client:
         async with client.stream("GET", url, headers={"Authorization": f"Bearer {TOKEN}", "Accept": "application/x-ndjson"}) as res:
             if res.status_code != 200:
                 raise HTTPException(status_code=res.status_code, detail="Lichess API error")
