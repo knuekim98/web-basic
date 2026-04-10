@@ -132,6 +132,9 @@ async def chess_stats():
 
 @app.post("/api/chess/user")
 async def chess_user_query(username: str = Body(..., embed=True)):
+    async with httpx.AsyncClient() as client:
+        res = await client.get("https://www.google.com/")
+        print(res.status_code, res.text)
     url = f"https://lichess.org/api/games/user/{username}?max=200&rated=true&perfType=bullet,blitz,rapid,classical"
     games = []
     async with httpx.AsyncClient(timeout=httpx.Timeout(None)) as client:
