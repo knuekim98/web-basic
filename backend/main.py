@@ -132,10 +132,17 @@ async def chess_stats():
 
 @app.post("/api/chess/user")
 async def chess_user_query(username: str = Body(..., embed=True)):
+    try:
+        async with httpx.AsyncClient() as client:
+            res = await client.get("https://lichess.org/api/account", headers={"Authorization": f"Bearer {TOKEN}", "User-Agent": "chess-web-basic project"})
+            return {"status": res.status_code, "text": res.text[:100]}
+    except Exception as e:
+        return {"error": str(e)}
+
     url = f"https://lichess.org/api/games/user/{username}?max=1&rated=true&perfType=bullet,blitz,rapid,classical"
     games = []
     async with httpx.AsyncClient(timeout=httpx.Timeout(None)) as client:
-        async with client.stream("GET", url, headers={"Authorization": f"Bearer {TOKEN}", "Accept": "application/x-ndjson"}) as res:
+        async with client.stream("GET", url, headers={"Authorization": f"Bearer {TOKEN}", "Accept": "application/x-ndjson", "User-Agent": "chess-web-basic project"}) as res:
             if res.status_code != 200:
                 raise HTTPException(status_code=res.status_code, detail="Lichess API error")
             
