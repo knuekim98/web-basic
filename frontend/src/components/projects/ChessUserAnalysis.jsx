@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, ExternalLink } from 'lucide-react';
 import axios from 'axios';
 
-const ChessUserAnalysis = ({ username, onBack, onSelectOpening }) => {
+const ChessUserAnalysis = () => {
+  const navigate = useNavigate();
+  const { username } = useParams();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
 
   useEffect(() => {
+    if (!username) return;
     const API_URL = import.meta.env.VITE_API_URL;
     const fetchUserData = async () => {
       setLoading(true);
@@ -50,7 +54,7 @@ const ChessUserAnalysis = ({ username, onBack, onSelectOpening }) => {
   return (
     <div className="max-w-7xl mx-auto py-12 px-6">
       <button 
-        onClick={onBack}
+        onClick={() => navigate('/chess/search')}
         className="flex items-center gap-2 text-zinc-500 hover:text-white mb-10 transition-colors text-sm uppercase tracking-widest"
       >
         <ArrowLeft size={18} /> Back to List
@@ -69,15 +73,13 @@ const ChessUserAnalysis = ({ username, onBack, onSelectOpening }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         <RepertoireSection 
           title="White Repertoire" 
-          openings={whiteRepertoire} 
-          onSelectOpening={onSelectOpening} 
-          myColor="white" 
+          openings={whiteRepertoire}
+          color="white" 
         />
         <RepertoireSection 
           title="Black Repertoire" 
-          openings={blackRepertoire} 
-          onSelectOpening={onSelectOpening} 
-          myColor="black" 
+          openings={blackRepertoire}
+          color="black" 
         />
       </div>
     </div>
@@ -85,31 +87,34 @@ const ChessUserAnalysis = ({ username, onBack, onSelectOpening }) => {
 };
 
 // 리퍼토리 섹션 컴포넌트
-const RepertoireSection = ({ title, openings, myColor, onSelectOpening }) => (
-  <div className="space-y-6">
-    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-[0.3em] flex items-center gap-3">
-      <span className={`w-2 h-2 rounded-full ${myColor === 'white' ? 'bg-white' : 'bg-zinc-700'}`} />
-      {title}
-    </h3>
-    <div className="grid gap-4">
-      {openings.length > 0 ? (
-        openings.map((op) => (
-          <div 
-            key={op.id} 
-            onClick={() => onSelectOpening(Number(op.id))} // ID 전달
-            className="cursor-pointer"
-          >
-            <OpeningStatCard op={op} myColor={myColor} />
+const RepertoireSection = ({ title, openings, color }) => {
+  const navigate = useNavigate();
+  return (
+    <div className="space-y-6">
+      <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-[0.3em] flex items-center gap-3">
+        <span className={`w-2 h-2 rounded-full ${color === 'white' ? 'bg-white' : 'bg-zinc-700'}`} />
+        {title}
+      </h3>
+      <div className="grid gap-4">
+        {openings.length > 0 ? (
+          openings.map((op) => (
+            <div 
+              key={op.id} 
+              onClick={() => navigate(`/chess/opening?id=${op.id}&color=${color}`)}
+              className="cursor-pointer"
+            >
+              <OpeningStatCard op={op} myColor={color} />
+            </div>
+          ))
+        ) : (
+          <div className="p-10 border border-dashed border-white/5 rounded-3xl text-center text-zinc-700 italic">
+            No matching openings found
           </div>
-        ))
-      ) : (
-        <div className="p-10 border border-dashed border-white/5 rounded-3xl text-center text-zinc-700 italic">
-          No matching openings found
-        </div>
-      )}
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // 개별 오프닝 카드 컴포넌트
 const OpeningStatCard = ({ op, myColor }) => {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BarChart2, TrendingUp, Loader2 } from 'lucide-react';
 import { Chessboard } from 'react-chessboard';
 import { 
@@ -82,12 +83,18 @@ const MetricSlider = ({ value, config, isZScore = true }) => {
   );
 };
 
-const ChessOpeningDetail = ({ opening_id, color, stats, onBack }) => {
+const ChessOpeningDetail = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const opening_id = searchParams.get('id');
+  const color = searchParams.get('color') || 'white';
 
   const [opening, setOpening] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
+    if (!opening_id) return;
     const API_URL = import.meta.env.VITE_API_URL;
     const fetchDetail = async () => {
       setLoading(true);
@@ -97,6 +104,7 @@ const ChessOpeningDetail = ({ opening_id, color, stats, onBack }) => {
           color: color
         });
         setOpening(response.data);
+        setStats((await axios.get(`${API_URL}/api/chess/stats`)).data);
       } catch (error) {
         console.error("Fetch error:", error);
       } finally {
@@ -193,15 +201,15 @@ const ChessOpeningDetail = ({ opening_id, color, stats, onBack }) => {
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-200 p-6 md:p-16">
       <div className="max-w-6xl mx-auto">
         <button 
-          onClick={onBack}
+          onClick={() => navigate('/chess')}
           className="flex items-center gap-2 text-zinc-500 hover:text-white mb-10 transition-colors text-sm uppercase tracking-widest"
         >
           <ArrowLeft size={18} /> Back to List
         </button>
 
-        <div className="flex flex-col lg:flex-row gap-16 items-start mb-20">
+        <div className="flex flex-col md:flex-row gap-12 items-start mb-20">
           {/* chessboard */}
-          <div className="w-full lg:w-[450px] shrink-0">
+          <div className="w-full lg:w-[450px] md:w-[400px] shrink-0">
             <div className="aspect-square rounded-xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/5">
               <Chessboard 
                 options={{

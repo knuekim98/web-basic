@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import axios from 'axios';
 import LandingPage from './components/LandingPage';
 import ProjectMenu from './components/ProjectMenu';
 import MnistProject from './components/projects/MnistProject';
 import ChessProject from './components/projects/ChessProject';
+import ChessOpeningDetail from './components/projects/ChessOpeningDetail';
+import ChessUserSearch from './components/projects/ChessUserSearch';
+import ChessUserAnalysis from './components/projects/ChessUserAnalysis';
 
 export default function App() {
-  const [page, setPage] = useState('landing');
   const [isBackendReady, setIsBackendReady] = useState(false);
 
   useEffect(() => {
@@ -26,25 +29,23 @@ export default function App() {
 
   return (
     <main className="bg-[#0a0a0a] min-h-screen text-white">
-      {page === 'landing' && (
-        <LandingPage onStart={() => setPage('menu')} />
-      )}
-      
-      {page === 'menu' && (
-        <ProjectMenu 
-          isBackendReady={isBackendReady} 
-          onBack={() => setPage('landing')} 
-          onSelectProject={(id) => setPage(id)} 
-        />
-      )}
+      <BrowserRouter basename="/web-basic">
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route 
+            path="/menu" 
+            element={<ProjectMenu isBackendReady={isBackendReady} />} 
+          />
+          
+          <Route path="/mnist" element={<MnistProject />} />
+          <Route path="/chess" element={<ChessProject />} />
+          <Route path="/chess/opening" element={<ChessOpeningDetail />} />
+          <Route path="/chess/search" element={<ChessUserSearch />} />
+          <Route path="/chess/user/:username" element={<ChessUserAnalysis />} />
 
-      {page === 'mnist' && (
-        <MnistProject onBack={() => setPage('menu')} />
-      )}
-
-      {page === 'chess' && (
-        <ChessProject onBack={() => setPage('menu')} />
-      )}
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </BrowserRouter>
     </main>
   );
 }

@@ -1,7 +1,9 @@
-import { Brain, Image, BarChart3, Settings, ChevronRight, ArrowLeft, ChessKing } from 'lucide-react';
+import { Brain, Image, Settings, ChevronRight, ArrowLeft, ChessKing } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
-const ProjectMenu = ({ isBackendReady, onBack, onSelectProject }) => {
+const ProjectMenu = ({ isBackendReady }) => {
+  const navigate = useNavigate();
   const projects = [
     { id: 'mnist', title: 'MNIST DIGIT RECOGNITION', icon: <Brain size={20} /> },
     { id: 'chess', title: 'CHESS OPENING RECOMMENDATION', icon: <ChessKing size={20} /> },
@@ -12,10 +14,10 @@ const ProjectMenu = ({ isBackendReady, onBack, onSelectProject }) => {
   return (
     <div className="min-h-screen flex flex-col md:flex-row items-center justify-center p-8 md:p-20 gap-16">
       <div className="w-full md:w-1/2 flex flex-col items-center md:items-start">
-        <motion.h2 className="text-7xl md:text-9xl font-black tracking-tighter mb-6">PROJECTS</motion.h2>
+        <motion.h2 className="text-7xl xl:text-9xl font-black tracking-tighter mb-6">PROJECTS</motion.h2>
         
         <button 
-          onClick={onBack}
+          onClick={() => navigate('/')}
           className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors tracking-[0.2em] text-xs uppercase mb-8"
         >
           <ArrowLeft size={14} /> Back to Home
@@ -30,7 +32,7 @@ const ProjectMenu = ({ isBackendReady, onBack, onSelectProject }) => {
         {projects.map((proj) => (
           <button
             key={proj.id}
-            onClick={() => onSelectProject(proj.id)}
+            onClick={() => navigate(`/${proj.id}`)}
             disabled={!isBackendReady | !['mnist','chess'].includes(proj.id)}
             className="w-full h-20 px-8 flex items-center justify-between border border-white/10 hover:border-white hover:bg-white/5 disabled:opacity-20 transition-all group"
           >

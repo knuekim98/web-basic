@@ -1,9 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, RotateCcw, Play, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const MnistProject = ({ onBack }) => {
+const MnistProject = () => {
+  const navigate = useNavigate();
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [prediction, setPrediction] = useState(null);
@@ -81,7 +83,7 @@ const MnistProject = ({ onBack }) => {
     <div className="min-h-screen p-8 md:p-20 flex flex-col items-center bg-[#0a0a0a] text-white">
       {/* 상단 헤더 */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-16">
-        <button onClick={onBack} className="flex items-center gap-2 text-zinc-500 hover:text-white mb-6 transition-colors text-sm uppercase tracking-widest">
+        <button onClick={() => navigate('/menu')} className="flex items-center gap-2 text-zinc-500 hover:text-white mb-6 transition-colors text-sm uppercase tracking-widest">
           <ArrowLeft size={18} /> Back to Dashboard
         </button>
         <h2 className="text-xl font-bold tracking-[0.2em] uppercase">MNIST Recognition</h2>

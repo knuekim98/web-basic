@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
-import ChessUserAnalysis from './ChessUserAnalysis';
 
-const ChessUserSearch = ({ onBack, onSelectOpening }) => {
+const ChessUserSearch = () => {
+  const navigate = useNavigate();
   const [inputValue, setInputValue] = useState("");
-  const [onSearch, setOnSearch] = useState(false);
 
-  if (onSearch) {
-    return (
-      <ChessUserAnalysis
-        username={inputValue}
-        onBack={() => setOnSearch(false)} 
-        onSelectOpening={onSelectOpening}
-      />
-    );
+  const handleSearch = () => {
+    if (inputValue.trim()) {
+      navigate(`/chess/user/${inputValue.trim()}`);
+    }
   };
 
   return (
@@ -21,7 +17,7 @@ const ChessUserSearch = ({ onBack, onSelectOpening }) => {
       <div className="w-full max-w-xl space-y-12">
         <div className="text-center space-y-4">
           <button 
-            onClick={onBack}
+            onClick={() => navigate('/chess')}
             className="text-zinc-500 hover:text-white transition-colors text-xs uppercase tracking-[0.3em] mb-4"
           >
             ← Back to List
@@ -40,12 +36,12 @@ const ChessUserSearch = ({ onBack, onSelectOpening }) => {
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && inputValue && setOnSearch(true)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="Username..."
             className="w-full bg-white/5 border border-white/10 rounded-[2.5rem] py-8 px-10 text-3xl font-bold text-white focus:outline-none focus:border-emerald-500/40 transition-all placeholder:text-zinc-800"
           />
           <button 
-            onClick={() => inputValue && setOnSearch(true)}
+            onClick={handleSearch}
             className="absolute right-4 top-1/2 -translate-y-1/2 p-5 bg-emerald-500 text-black rounded-[2rem] hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(16,185,129,0.2)]"
           >
             <Search size={28} strokeWidth={3} />

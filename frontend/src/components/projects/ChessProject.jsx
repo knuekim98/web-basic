@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight, ChessKing, TrendingUp, Search, X, Lightbulb } from 'lucide-react';
 import axios from 'axios';
-import ChessOpeningDetail from './ChessOpeningDetail';
-import ChessUserSearch from './ChessUserSearch';
 
-const ChessProject = ({ onBack }) => {
+const ChessProject = () => {
+  const navigate = useNavigate();
+
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
@@ -13,11 +14,6 @@ const ChessProject = ({ onBack }) => {
   const [color, setColor] = useState("white");
   const [sortBy, setSortBy] = useState('games');
   const [ascending, setAscending] = useState(false);
-
-  const [selectedOpening, setSelectedOpening] = useState(null);
-  const [showUserSearch, setShowUserSearch] = useState(false);
-
-  const [statsData, setStatsData] = useState({});
   const pageSize = 15;
 
   useEffect(() => {
@@ -45,22 +41,6 @@ const ChessProject = ({ onBack }) => {
     fetchData();
   }, [currentPage, searchTerm, color, sortBy, ascending]);
 
-  useEffect(() => {
-    const API_URL = import.meta.env.VITE_API_URL;
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get(`${API_URL}/api/chess/stats`);
-        setStatsData(response.data);
-      } catch (error) {
-        console.error("Fetch error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     setCurrentPage(0);
@@ -86,39 +66,17 @@ const ChessProject = ({ onBack }) => {
     return range;
   };
 
-  if (selectedOpening) {
-    return (
-      <ChessOpeningDetail 
-        opening_id={selectedOpening}
-        color={color}
-        stats={statsData}
-        onBack={() => setSelectedOpening(null)} 
-      />
-    );
-  }
-  if (showUserSearch) {
-    return (
-      <ChessUserSearch
-        onBack={() => setShowUserSearch(false)}
-        onSelectOpening={(id) => {
-          setSelectedOpening(id);
-          setShowUserSearch(false);
-        }}
-      />
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-200 p-6 md:p-16 font-sans">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-10">
         <div className="flex justify-between items-start mb-10">
-          <button onClick={onBack} className="flex items-center gap-2 text-zinc-500 hover:text-white mb-6 transition-colors text-sm uppercase tracking-widest">
+          <button onClick={() => navigate('/menu')} className="flex items-center gap-2 text-zinc-500 hover:text-white mb-6 transition-colors text-sm uppercase tracking-widest">
             <ArrowLeft size={18} /> Back to Dashboard
           </button>
 
           <button 
-            onClick={() => setShowUserSearch(true)}
+            onClick={() => navigate('/chess/search')}
             className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 hover:bg-emerald-500/20 transition-all font-bold text-sm"
           >
             <Search size={16} /> Analyze Player
@@ -224,7 +182,7 @@ const ChessProject = ({ onBack }) => {
                     <td className="p-8 overflow-hidden">
                       <div className="flex flex-col gap-2 max-w-full">
                         <span 
-                          onClick={() => setSelectedOpening(opening.id)}
+                          onClick={() => navigate(`/chess/opening?id=${opening.id}&color=${color}`)}
                           className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors leading-tight truncate block w-110"
                           title={opening.name}
                         >
