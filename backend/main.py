@@ -9,10 +9,10 @@ from fastapi import FastAPI, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Union
 from pydantic import BaseModel
+import chess
 
 import os
 from dotenv import load_dotenv
-import httpx
 load_dotenv("./dev/chess/.env.chess")
 TOKEN = os.environ.get("API_TOKEN")
 
@@ -28,14 +28,6 @@ with open("./db/chess/stats_white.json", "r") as f:
     stats_white = json.load(f)
 with open("./db/chess/stats_black.json", "r") as f:
     stats_black = json.load(f) 
-
-def moves_formatting(moves_list):
-    moves_formatted  = []
-    for i, move in enumerate(moves_list):
-        if i&1==0: moves_formatted.append(f"{(i//2)+1}.{move}")
-        else: moves_formatted.append(move)
-    moves_formatted = " ".join(moves_formatted)
-    return moves_formatted
 
 
 # load models
@@ -146,17 +138,21 @@ async def chess_analyze(request_data: AnalyzeRequest):
         game = {
             "speed": data["perf"],
             "result": data.get("winner", "draws"),
-            "me": "white" if data["players"]["white"]["user"]["name"] == username else "black",
+            "me": "white" if data["players"]["white"]["user"]["id"] == username else "black",
         }
         
         search_df = df_chess_white if game["me"] == "white" else df_chess_black
         game["opening"] = []
         moves_list = data["moves"].split()
-        depth_max = 11 if game["me"] == "white" else 12
-        
-        for depth in range(depth_max, 4, -2):
-            target = moves_formatting(moves_list[:depth])
-            match = search_df[search_df["moves"] == target]
+
+        board = chess.Board()
+        for depth in range(12):
+            if depth >= len(moves_list): break
+            board.push_san(moves_list[depth])
+            if depth < 4 or depth&1 == (game["me"]=="white"): continue
+
+            fen = board.fen()
+            match = search_df[search_df["fen"] == fen]
             if not match.empty:
                 game["opening"].append(match.iloc[0].to_dict())
         processed_games.append(game)

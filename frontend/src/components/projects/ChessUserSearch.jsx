@@ -8,7 +8,7 @@ const ChessUserSearch = () => {
 
   const handleSearch = () => {
     if (inputValue.trim()) {
-      navigate(`/chess/user/${inputValue.trim()}`);
+      navigate(`/chess/user/${inputValue.trim().toLowerCase()}`);
     }
   };
 

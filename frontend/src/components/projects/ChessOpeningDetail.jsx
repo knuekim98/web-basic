@@ -104,7 +104,7 @@ const ChessOpeningDetail = () => {
           color: color
         });
         setOpening(response.data);
-        setStats((await axios.get(`${API_URL}/api/chess/stats`)).data);
+        setStats((await axios.get(`${API_URL}/api/chess/stats`)).data[color]);
       } catch (error) {
         console.error("Fetch error:", error);
       } finally {
@@ -119,21 +119,12 @@ const ChessOpeningDetail = () => {
     </div>
   );
 
-  const totalGames = {white: stats.white.total, black: stats.black.total}
-  const avgScore = color === 'white' ? stats.white.avg_score_rate : stats.black.avg_score_rate;
-  const scoreHistData = {
-    white: stats.white.score_hist,
-    black: stats.black.score_hist
-  };
-  const drawsHistData = {
-    white: stats.white.draws_hist,
-    black: stats.black.draws_hist
-  };
-  const scoreDistData = scoreHistData[color].map((val, i) => ({ 
+  const avgScore = stats.avg_score_rate
+  const scoreDistData = stats.score_hist.map((val, i) => ({ 
     count: val,
     label: 20 + i*2
   }));
-  const drawsDistData = drawsHistData[color].map((val, i) => ({ 
+  const drawsDistData = stats.draws_hist.map((val, i) => ({ 
     count: val,
     label: (i/3).toFixed(1)
   }));
@@ -356,7 +347,7 @@ const ChessOpeningDetail = () => {
               <h3 className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold absolute top-6 left-6"> Popularity </h3>
               <div className="flex flex-col items-center">
                   <span className="text-4xl font-black text-white italic tracking-tighter"> 
-                      #{opening.selection_rate_rank} <span className="text-zinc-600 text-2xl">/ {totalGames[color]}</span>
+                      #{opening.selection_rate_rank} <span className="text-zinc-600 text-2xl">/ {stats.total}</span>
                   </span>
                   <p className="text-right text-m font-mono text-zinc-400 mt-2"> Pick Rate: {opening.selection_rate.toFixed(2)}% </p>
               </div>

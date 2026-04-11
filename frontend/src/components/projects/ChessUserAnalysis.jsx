@@ -91,7 +91,7 @@ const ChessUserAnalysis = () => {
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-emerald-500 font-mono text-xs tracking-[0.4em] uppercase font-bold">Player Report</span>
           </div>
-          <h2 className="text-7xl font-black text-white tracking-tighter lowercase">{username}<span className="text-zinc-800">.</span></h2>
+          <h2 className="text-7xl font-black text-white tracking-tighter">{username}<span className="text-zinc-800">.</span></h2>
         </div>
       </div>
 
@@ -111,7 +111,7 @@ const ChessUserAnalysis = () => {
   );
 };
 
-// 리퍼토리 섹션 컴포넌트
+// repertorie component
 const RepertoireSection = ({ title, openings, color }) => {
   return (
     <div className="space-y-6">
@@ -138,7 +138,7 @@ const RepertoireSection = ({ title, openings, color }) => {
   );
 };
 
-// 개별 오프닝 카드 컴포넌트
+// opening card component
 const OpeningStatCard = ({ op, myColor }) => {
   const winCount = myColor === 'white' ? op.white : op.black;
   const lossCount = myColor === 'white' ? op.black : op.white;
@@ -160,7 +160,6 @@ const OpeningStatCard = ({ op, myColor }) => {
         </div>
       </div>
 
-      {/* Stacked Win/Draw/Loss Bar */}
       <div className="h-2 w-full flex rounded-full overflow-hidden bg-zinc-800">
         <div style={{ width: `${winP}%` }} className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
         <div style={{ width: `${drawP}%` }} className="h-full bg-zinc-500" />

@@ -4,7 +4,7 @@ Pillow
 numpy
 pandas
 python-dotenv
-httpx
+python-chess
 
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch
