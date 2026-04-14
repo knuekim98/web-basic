@@ -20,10 +20,6 @@ TOKEN = os.environ.get("API_TOKEN")
 import json
 df_chess_white = pd.read_csv("./db/chess/db_white_processed.csv")
 df_chess_black = pd.read_csv("./db/chess/db_black_processed.csv")
-with open("./db/chess/trie_white.json", "r") as f:
-    trie_white = json.load(f)
-with open("./db/chess/trie_black.json", "r") as f:
-    trie_black = json.load(f) 
 with open("./db/chess/stats_white.json", "r") as f:
     stats_white = json.load(f)
 with open("./db/chess/stats_black.json", "r") as f:

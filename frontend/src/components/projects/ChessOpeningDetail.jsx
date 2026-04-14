@@ -218,7 +218,7 @@ const ChessOpeningDetail = () => {
               <span className="text-emerald-500 font-mono text-sm tracking-widest uppercase mb-2 block">{opening.ECO}</span>
               <h2 className="text-3xl lg:text-4xl font-black text-white leading-tight tracking-tighter mb-4">{opening.name}</h2>
               <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                <p className="text-zinc-400 font-mono lg:text-lg leading-relaxed italic">
+                <p className="text-zinc-200 font-mono lg:text-lg leading-relaxed">
                   {opening.moves}
                 </p>
               </div>

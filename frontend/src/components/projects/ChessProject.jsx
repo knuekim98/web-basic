@@ -88,8 +88,8 @@ const ChessProject = () => {
         </h1>
 
         <h3 className="text-sm text-zinc-500 italic mt-3">
-          This database catalogs with 1M+ recorded games on lichess.org,<br></br>
-          restricted to the initial 3-6 moves and games played at a 1400+ rating, blitz or longer time control. 
+          This database features openings with a minimum of 500k recorded games on lichess.org,<br></br>
+          restricted to the initial 3-6 moves for games played at a 1400+ rating (Blitz or slower). 
         </h3>
 
         <div className="mt-12 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -167,7 +167,7 @@ const ChessProject = () => {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-white/10 bg-white/[0.03]">
-                <th className="py-8 pl-8 text-xs uppercase tracking-[0.2em] text-zinc-500 font-bold">Opening / Stats</th>
+                <th className="py-8 pl-8 text-xs uppercase tracking-[0.2em] text-zinc-500 font-bold">Opening</th>
                 <th className="py-8 px-2 text-xs uppercase tracking-[0.2em] text-zinc-500 font-bold">Win Rate Distribution</th>
                 <th className="p-8 text-xs uppercase tracking-[0.2em] text-zinc-500 font-bold">Move Sequence</th>
               </tr>
@@ -179,7 +179,7 @@ const ChessProject = () => {
                 return (
                   <tr key={idx} className="hover:bg-white/[0.02] transition-all group">
                     {/* Name & Total Games */}
-                    <td className="py-8 pl-8 pr-4 overflow-hidden">
+                    <td className="py-8 pl-8 pr-4 overflow-hidden w-80 lg:w-110">
                       <div className="flex flex-col gap-2 max-w-full">
                         <span 
                           onClick={() => navigate(`/chess/opening?id=${opening.id}&color=${color}`)}
@@ -198,7 +198,7 @@ const ChessProject = () => {
                     </td>
 
                     {/* Win Rate Bar */}
-                    <td className="py-8 px-2 w-80">
+                    <td className="py-8 px-2 w-50 lg:w-80">
                       <div className="flex flex-col gap-3">
                         <div className="flex h-4 w-full rounded-full overflow-hidden bg-zinc-800 ring-1 ring-white/10">
                           {color === 'white' ? (
@@ -236,7 +236,7 @@ const ChessProject = () => {
                     {/* Move Sequence */}
                     <td className="p-8 overflow-hidden">
                       <div className="bg-black/30 px-4 py-3 rounded-lg border border-white/5 max-w-full">
-                        <p className="text-xs font-mono text-zinc-400 truncate italic" title={opening.moves}>
+                        <p className="text-xs font-mono text-zinc-200" title={opening.moves}>
                           {opening.moves}
                         </p>
                       </div>

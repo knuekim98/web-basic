@@ -12,9 +12,9 @@ const ProjectMenu = ({ isBackendReady }) => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row items-center justify-center p-8 md:p-20 gap-16">
+    <div className="min-h-screen flex flex-col md:flex-row items-center justify-center p-8 md:p-20 gap-4 md:gap-16">
       <div className="w-full md:w-1/2 flex flex-col items-center md:items-start">
-        <motion.h2 className="text-7xl xl:text-9xl font-black tracking-tighter mb-6">PROJECTS</motion.h2>
+        <motion.h2 className="text-5xl md:text-7xl xl:text-9xl font-black tracking-tighter mb-3 md:mb-6">PROJECTS</motion.h2>
         
         <button 
           onClick={() => navigate('/')}
