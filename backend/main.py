@@ -128,24 +128,26 @@ async def chess_analyze(request_data: AnalyzeRequest):
     username = request_data.username
     games = request_data.games
 
+    speed_count = {"bullet":0, "blitz":0, "rapid":0, "classical":0}
     processed_games = []
     for data in games:
         if data.get("variant") != "standard": continue
+
         game = {
             "speed": data["perf"],
             "result": data.get("winner", "draws"),
             "me": "white" if data["players"]["white"]["user"]["id"] == username else "black",
         }
-        
+        speed_count[game["speed"]] += 1
         search_df = df_chess_white if game["me"] == "white" else df_chess_black
+
         game["opening"] = []
         moves_list = data["moves"].split()
-
         board = chess.Board()
         for depth in range(12):
             if depth >= len(moves_list): break
             board.push_san(moves_list[depth])
-            if depth < 4 or depth&1 == (game["me"]=="white"): continue
+            if depth&1 == (game["me"]=="white"): continue
 
             fen = board.fen()
             match = search_df[search_df["fen"] == fen]
@@ -172,4 +174,8 @@ async def chess_analyze(request_data: AnalyzeRequest):
                 opening_result[me][main_opening_id]["variations"][opening_id] = {"name": opening["name"], "white": 0, "draws": 0, "black": 0}
             opening_result[me][main_opening_id]["variations"][opening_id][result] += 1
             
-    return {"opening_result": opening_result}
+    return {
+        "total_count": len(processed_games),
+        "speed_count": speed_count,
+        "opening_result": opening_result
+    }

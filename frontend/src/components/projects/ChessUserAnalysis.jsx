@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, ChevronUp, ChevronDown, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Loader2, ChevronUp, ChevronDown, ExternalLink, 
+         Zap, Flame, Timer, Clock, Search } from 'lucide-react';
 import axios from 'axios';
 
 const ChessUserAnalysis = () => {
   const { username } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+
   const [data, setData] = useState(null);
+  const [speedCount, setSpeedCount] = useState(null);
+  const [analyzedCount, setAnalyzedCount] = useState(200);
+  const [userData, setUserData] = useState(null);
   const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
@@ -15,6 +20,10 @@ const ChessUserAnalysis = () => {
     const fetchUserData = async () => {
       setLoading(true);
       try {
+        const profileRes = await fetch(`https://lichess.org/api/user/${username}`);
+        const profileData = await profileRes.json();
+        setUserData(profileData);
+
         const lichessUrl = `https://lichess.org/api/games/user/${username}?max=200&rated=true&perfType=bullet,blitz,rapid,classical`;
         const res = await fetch(lichessUrl, { headers: { 'Accept': 'application/x-ndjson' } });
         if (!res.ok) throw new Error("Lichess API access failed");
@@ -24,7 +33,6 @@ const ChessUserAnalysis = () => {
         let { value, done } = await reader.read();
         let leftover = "";
         const games = [];
-
         while (!done) {
           const chunk = leftover + decoder.decode(value, { stream: true });
           const lines = chunk.split("\n");
@@ -37,9 +45,11 @@ const ChessUserAnalysis = () => {
 
         const response = await axios.post(`${API_URL}/api/chess/analyze`, {
           username: username,
-          games: games
+          games: games,
         });
         setData(response.data.opening_result);
+        setAnalyzedCount(response.data.total_count);
+        setSpeedCount(response.data.speed_count);
       } catch (error) {
         console.error("Analysis error:", error);
       } finally {
@@ -55,7 +65,7 @@ const ChessUserAnalysis = () => {
     return Object.entries(resultObj)
       .map(([id, data]) => ({ id, ...data, total: data.white + data.draws + data.black }))
       .sort((a, b) => b.total - a.total)
-      //.slice(0, 8);
+      .slice(0, 10);
   };
 
   if (loading) return (
@@ -71,9 +81,59 @@ const ChessUserAnalysis = () => {
         <ArrowLeft size={16} /> Back to List
       </button>
 
-      <div className="mb-20">
-        <span className="text-emerald-500 font-mono text-xs tracking-[0.4em] uppercase font-bold block mb-2">Analysis Result</span>
-        <h2 className="text-7xl font-black text-white tracking-tighter italic lowercase">{username}<span className="text-zinc-800">.</span></h2>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="h-[1px] w-8 bg-emerald-500/50" />
+          <span className="text-emerald-500 font-mono text-[11px] tracking-[0.4em] uppercase font-bold">
+            Analysis Report
+          </span>
+        </div>
+        <h2 className="text-7xl font-black text-gray-50 tracking-tighter italic flex items-baseline gap-2">
+          {userData.username}<span className="text-emerald-500">.</span>
+        </h2>
+        <p className="text-zinc-500 text-sm mb-16 flex items-center gap-2">
+          <Search size={14} className="text-zinc-500" />
+          Analyzed the last <span className="text-zinc-300 font-bold">{analyzedCount}</span> rated games from your history.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-start justify-between gap-y-8 mb-16 px-2">
+        <RatingItem 
+          icon={Zap} 
+          label="Bullet" 
+          rating={userData?.perfs?.bullet?.rating} 
+          prov={userData?.perfs?.bullet?.prov} 
+          total={userData?.perfs?.bullet?.games} 
+          samples={speedCount?.bullet}
+          color="text-yellow-400"
+        />
+        <RatingItem 
+          icon={Flame} 
+          label="Blitz" 
+          rating={userData?.perfs?.blitz?.rating} 
+          prov={userData?.perfs?.blitz?.prov} 
+          total={userData?.perfs?.blitz?.games} 
+          samples={speedCount?.blitz}
+          color="text-orange-500"
+        />
+        <RatingItem 
+          icon={Timer} 
+          label="Rapid" 
+          rating={userData?.perfs?.rapid?.rating} 
+          prov={userData?.perfs?.rapid?.prov} 
+          total={userData?.perfs?.rapid?.games} 
+          samples={speedCount?.rapid}
+          color="text-emerald-400"
+        />
+        <RatingItem 
+          icon={Clock} 
+          label="Classical" 
+          rating={userData?.perfs?.classical?.rating} 
+          prov={userData?.perfs?.classical?.prov} 
+          total={userData?.perfs?.classical?.games} 
+          samples={speedCount?.classical}
+          color="text-blue-400"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
@@ -95,8 +155,8 @@ const RepertoireSection = ({ title, groups, myColor }) => (
         <thead>
           <tr className="border-b border-white/5 text-[10px] text-zinc-500 uppercase tracking-widest">
             <th className="pb-4 font-bold">Main Opening</th>
-            <th className="pb-4 font-bold">Games</th>
-            <th className="pb-4 font-bold">Result</th>
+            <th className="pb-4 font-bold text-center">Games</th>
+            <th className="pb-4 font-bold text-center">Result</th>
             <th className="pb-4 font-bold text-right">WR%</th>
             <th className="pb-4 w-8"></th>
           </tr>
@@ -136,8 +196,8 @@ const OpeningGroupCard = ({ group, myColor }) => {
             </span>
           </div>
         </td>
-        <td className="py-4 pr-4 text-zinc-500 font-mono text-xs">{total}</td>
-        <td className="py-4 pr-4 min-w-[120px]">
+        <td className="py-4 px-4 text-gray-50 font-bold text-xs text-center">{total}</td>
+        <td className="py-4 px-2 min-w-[120px]">
           <div className="flex flex-col gap-1.5">
             <div className="h-1.5 w-full flex rounded-full overflow-hidden bg-zinc-800">
               <div style={{ width: `${winP}%` }} className="bg-emerald-500" />
@@ -151,7 +211,7 @@ const OpeningGroupCard = ({ group, myColor }) => {
             </div>
           </div>
         </td>
-        <td className="py-4 text-right font-black font-mono text-xs italic text-white">
+        <td className="py-4 pl-2 text-right font-black font-mono text-xs italic text-gray-50">
           {( (winCount + drawCount/2) / total * 100 ).toFixed(1)}%
         </td>
         <td className="py-4 text-right pl-4"></td>
@@ -193,5 +253,34 @@ const OpeningGroupCard = ({ group, myColor }) => {
     </tbody>
   );
 };
+
+const RatingItem = ({ icon: Icon, label, color, rating, prov, total, samples }) => (
+  <div className="flex flex-col min-w-[160px] group">
+    <div className="flex items-center gap-2 mb-2">
+      <Icon size={14} className={`${color} opacity-80`} />
+      <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-black">{label}</span>
+    </div>
+
+    <div className="flex items-baseline gap-1 mb-3">
+      <span className="text-4xl font-mono font-black text-gray-50 italic tracking-tighter">
+        {rating ? `${rating}${prov ? '?' : ''}` : '—'}
+      </span>
+    </div>
+
+    <div className="flex items-center gap-4 border-t border-white/5 pt-2">
+      <div className="flex flex-col">
+        <span className="text-[11px] font-mono font-bold text-zinc-500">{(total || 0).toLocaleString()}</span>
+        <span className="text-[8px] text-zinc-700 uppercase font-black tracking-tighter">Lifetime</span>
+      </div>
+      <div className="w-px h-5 bg-white/5" />
+      <div className="flex flex-col">
+        <span className={`text-[11px] font-mono font-bold ${samples > 0 ? 'text-emerald-500/80' : 'text-zinc-800'}`}>
+          {samples || 0}
+        </span>
+        <span className="text-[8px] text-zinc-700 uppercase font-black tracking-tighter">Samples</span>
+      </div>
+    </div>
+  </div>
+);
 
 export default ChessUserAnalysis;
