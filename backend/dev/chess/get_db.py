@@ -24,7 +24,6 @@ def get_data(url):
 RATINGS = [0,1000,1200,1400,1600,1800,2000,2200,2500]
 SPEEDS = ["bullet","blitz","rapid","classical"]
 def make_db(opening, fn, start):
-    '''
     if start == 0:
         with open(f"./backend/db/chess/db_{fn}_selected.csv", "w", newline='') as f:
             cl = ["id", "fen", "name", "moves", "ECO", "parent", "child"]
@@ -33,15 +32,11 @@ def make_db(opening, fn, start):
             for r in RATINGS: cl += [f"{r}_white", f"{r}_draws", f"{r}_black"]
             for s in SPEEDS: cl += [f"{s}_white", f"{s}_draws", f"{s}_black"]
             csv.writer(f).writerow(cl)
-    '''
 
     with open(f"./backend/db/chess/db_{fn}_selected.csv", "a+", newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         for i, fen in enumerate(opening):
             if not (start<=i): continue
-
-            move_num = int(opening[fen]["moves"].split('.')[-2].strip().split(' ')[-1])
-            if move_num >= 3: continue
 
             # basic info
             line = [opening[fen]["id"], fen, opening[fen]["name"], opening[fen]["moves"], opening[fen]["eco"]]

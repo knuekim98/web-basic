@@ -364,7 +364,7 @@ const ChessOpeningDetail = () => {
                     <b className="text-zinc-300">{opening.games.toLocaleString()}</b> Games
                   </span>
                   <span className="text-m font-mono text-zinc-400">
-                    <b className="text-zinc-300">{opening.selection_rate.toFixed(2)}%</b> Pick rate
+                    <b className="text-zinc-300">{opening.selection_rate.toFixed(3)}%</b> Pick rate
                   </span>
               </div>
             </div>

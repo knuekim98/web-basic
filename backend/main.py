@@ -163,13 +163,13 @@ async def chess_analyze(request_data: AnalyzeRequest):
         main_opening = game["opening"][0]
         main_opening_id = main_opening["id"]
         if main_opening_id not in opening_result[me]:
-            opening_result[me][main_opening_id] = {"name": opening["name"], "white": 0, "draws": 0, "black": 0, "variations":{}}
+            opening_result[me][main_opening_id] = {"name": main_opening["name"], "white": 0, "draws": 0, "black": 0, "variations":{}}
         opening_result[me][main_opening_id][result] += 1
         
         for opening in game["opening"][1:]:
             opening_id = opening["id"]
             if opening_id not in opening_result[me][main_opening_id]["variations"]:
-                opening_result[me][main_opening_id]["variations"] = {"name": opening["name"], "white": 0, "draws": 0, "black": 0}
+                opening_result[me][main_opening_id]["variations"][opening_id] = {"name": opening["name"], "white": 0, "draws": 0, "black": 0}
             opening_result[me][main_opening_id]["variations"][opening_id][result] += 1
             
     return {"opening_result": opening_result}
