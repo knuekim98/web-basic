@@ -122,7 +122,6 @@ const ChessProject = () => {
                   <option value="games" className="bg-zinc-900">Games Count</option>
                   <option value="score_rate" className="bg-zinc-900">Win Rate</option>
                   <option value="draws_rate" className="bg-zinc-900">Draw Rate</option>
-                  <option value="average_rating" className="bg-zinc-900">Avg Rating</option>
                 </select>
                 
                 <button 

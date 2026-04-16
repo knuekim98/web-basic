@@ -1,12 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BarChart2, TrendingUp, Loader2 } from 'lucide-react';
+import { ArrowLeft, BarChart2, TrendingUp, Loader2, Zap, Flame, Timer, Clock } from 'lucide-react';
 import { Chessboard } from 'react-chessboard';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  AreaChart, Area, ReferenceLine, BarChart, Bar
+  AreaChart, Area, ReferenceLine, BarChart, Bar,
 } from 'recharts';
 import axios from 'axios';
+
+const SpeedRatingItem = ({ icon: Icon, label, value, colorClass }) => (
+  <div className="flex flex-col items-center flex-1 min-w-[120px] p-6 relative group transition-all hover:bg-white/[0.02]">
+    <div className={`mb-3 p-3 rounded-2xl bg-zinc-900 border border-white/5 ${colorClass} group-hover:scale-110 transition-transform`}>
+      <Icon size={20} />
+    </div>
+    <span className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] mb-1 font-bold">{label}</span>
+    <span className="text-xl font-mono font-black text-white italic">
+      {value && value > 0 ? Math.round(value) : '—'}
+    </span>
+    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-px h-12 bg-white/5 hidden md:block group-last:hidden" />
+  </div>
+);
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -122,7 +135,7 @@ const ChessOpeningDetail = () => {
   const avgScore = stats.avg_score_rate
   const scoreDistData = stats.score_hist.map((val, i) => ({ 
     count: val,
-    label: 20 + i*2
+    label: 30 + i*(4/3)
   }));
   const drawsDistData = stats.draws_hist.map((val, i) => ({ 
     count: val,
@@ -217,26 +230,13 @@ const ChessOpeningDetail = () => {
             <div>
               <span className="text-emerald-500 font-mono text-sm tracking-widest uppercase mb-2 block">{opening.ECO}</span>
               <h2 className="text-3xl lg:text-4xl font-black text-white leading-tight tracking-tighter mb-4">{opening.name}</h2>
-              <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                <p className="text-zinc-200 font-mono lg:text-lg leading-relaxed">
+              <p className="text-zinc-200 font-mono lg:text-lg leading-relaxed">
                   {opening.moves}
-                </p>
-              </div>
+              </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 lg:gap-6">
-              <div className="bg-zinc-900/50 p-4 lg:p-6 rounded-2xl border border-white/5">
-                <p className="text-zinc-500 text-[10px] uppercase tracking-widest mb-1">Avg Rating</p>
-                <p className="text-2xl font-bold text-white">{Math.round(opening.average_rating)}</p>
-              </div>
-              <div className="bg-zinc-900/50 p-4 lg:p-6 rounded-2xl border border-white/5">
-                <p className="text-zinc-500 text-[10px] uppercase tracking-widest mb-1">Total Games</p>
-                <p className="text-2xl font-bold text-white">{opening.games.toLocaleString()}</p>
-              </div>
-            </div>
-            
             <div className="flex flex-col gap-4">
-              <p className="text-zinc-500 text-[10px] uppercase tracking-widest">Performance</p>
+              <p className="text-zinc-400 text-[10px] uppercase tracking-widest">Performance</p>
               <div className="flex h-6 w-full rounded-full overflow-hidden bg-zinc-800 ring-1 ring-white/10">
                 {color === 'white' ? (
                   <>
@@ -268,6 +268,17 @@ const ChessOpeningDetail = () => {
                 )}
               </div>
             </div>
+            
+            <div className="flex flex-col gap-4">
+              <p className="text-zinc-400 text-[10px] uppercase tracking-widest">average user rating</p>
+              <div className="flex flex-wrap">
+                <SpeedRatingItem icon={Zap} label="Bullet" value={opening.bullet_avg} colorClass="text-yellow-400" />
+                <SpeedRatingItem icon={Flame} label="Blitz" value={opening.blitz_avg} colorClass="text-orange-500" />
+                <SpeedRatingItem icon={Timer} label="Rapid" value={opening.rapid_avg} colorClass="text-emerald-400" />
+                <SpeedRatingItem icon={Clock} label="Classical" value={opening.classical_avg} colorClass="text-blue-400" />
+              </div>
+            </div>
+          
           </div>
         </div>
 
@@ -346,10 +357,15 @@ const ChessOpeningDetail = () => {
             <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl flex flex-col justify-center items-center h-56 relative">
               <h3 className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold absolute top-6 left-6"> Popularity </h3>
               <div className="flex flex-col items-center">
-                  <span className="text-4xl font-black text-white italic tracking-tighter"> 
+                  <span className="text-4xl font-black text-white italic tracking-tighter mb-4"> 
                       #{opening.selection_rate_rank} <span className="text-zinc-600 text-2xl">/ {stats.total}</span>
                   </span>
-                  <p className="text-right text-m font-mono text-zinc-400 mt-2"> Pick Rate: {opening.selection_rate.toFixed(2)}% </p>
+                  <span className="text-m font-mono text-zinc-400">
+                    <b className="text-zinc-300">{opening.games.toLocaleString()}</b> Games
+                  </span>
+                  <span className="text-m font-mono text-zinc-400">
+                    <b className="text-zinc-300">{opening.selection_rate.toFixed(2)}%</b> Pick rate
+                  </span>
               </div>
             </div>
         </div>

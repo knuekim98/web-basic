@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Loader2, ChevronUp, ChevronDown, ExternalLink } from 'lucide-react';
 import axios from 'axios';
 
 const ChessUserAnalysis = () => {
@@ -53,9 +53,9 @@ const ChessUserAnalysis = () => {
   const processResult = (resultObj) => {
     if (!resultObj) return [];
     return Object.entries(resultObj)
-      .map(([id, stats]) => ({ id, ...stats, total: stats.white + stats.draws + stats.black }))
+      .map(([id, data]) => ({ id, ...data, total: data.white + data.draws + data.black }))
       .sort((a, b) => b.total - a.total)
-      .slice(0, 8);
+      //.slice(0, 8);
   };
 
   if (loading) return (

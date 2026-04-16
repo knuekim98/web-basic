@@ -108,7 +108,7 @@ async def chess_opening(opening_id: int = Body(...), color: str = Body(default="
     df = df_chess_white if color=="white" else df_chess_black
     res = df[df["id"] == opening_id]
     if res.empty: raise HTTPException(status_code=404, detail="Opening not found")
-    return res.iloc[0].to_dict()
+    return res.fillna('null').iloc[0].to_dict()
 
 
 @app.get("/api/chess/stats")
@@ -153,13 +153,23 @@ async def chess_analyze(request_data: AnalyzeRequest):
                 game["opening"].append(match.iloc[0].to_dict())
         processed_games.append(game)
     
+    print(sum(game["opening"] != [] and game["me"]=="white" for game in processed_games), '/', sum(game["me"] == "white" for game in processed_games))
+
     opening_result = {"white": {}, "black": {}}
     for game in processed_games:
-        for opening in game["opening"]:
-            me = game["me"]
+        if not game["opening"]: continue
+        me = game["me"]
+        result = game["result"]
+        main_opening = game["opening"][0]
+        main_opening_id = main_opening["id"]
+        if main_opening_id not in opening_result[me]:
+            opening_result[me][main_opening_id] = {"name": opening["name"], "white": 0, "draws": 0, "black": 0, "variations":{}}
+        opening_result[me][main_opening_id][result] += 1
+        
+        for opening in game["opening"][1:]:
             opening_id = opening["id"]
-            if opening_id not in opening_result[me]:
-                opening_result[me][opening_id] = {"name": opening["name"], "white": 0, "draws": 0, "black": 0}
-            opening_result[me][opening_id][game["result"]] += 1
+            if opening_id not in opening_result[me][main_opening_id]["variations"]:
+                opening_result[me][main_opening_id]["variations"] = {"name": opening["name"], "white": 0, "draws": 0, "black": 0}
+            opening_result[me][main_opening_id]["variations"][opening_id][result] += 1
             
     return {"opening_result": opening_result}

@@ -38,7 +38,7 @@ def preprocess(fn):
 
     df["score_rate_hist"] = ((df["score_rate"] - 20) / 2).astype(int)
     df["draws_rate_hist"] = (df["draws_rate"] * 3).astype(int)
-    score_hist, _ = np.histogram(df['score_rate'], bins=31, range=(20, 80))
+    score_hist, _ = np.histogram(df['score_rate'], bins=31, range=(30, 70))
     draws_hist, _ = np.histogram(df['draws_rate'], bins=31, range=(0, 10))
     stats[f"score_hist"] = score_hist.tolist()
     stats[f"draws_hist"] = draws_hist.tolist()
@@ -48,10 +48,15 @@ def preprocess(fn):
     df["selection_rate_rank"] = df["selection_rate"].rank(ascending=False, method='min').astype(int)
 
     # get sharpness
-    sharp_model = LinearRegression()
-    sharp_model.fit(df["average_rating"].values.reshape(-1, 1), df["draws_rate"])
-    df["sharpness"] = -(df["draws_rate"] - (sharp_model.coef_[0]*df["average_rating"] + sharp_model.intercept_))
-    df["sharpness"] = StandardScaler().fit_transform(df["sharpness"].values.reshape(-1, 1))
+    for s in SPEEDS:
+        sharp_model = LinearRegression()
+        sharp_model.fit(df[f"{s}_avg"].values.reshape(-1, 1), df["draws_rate"])
+        df[f"{s}_sharpness"] = -(df["draws_rate"] - (sharp_model.coef_[0]*df[f"{s}_avg"] + sharp_model.intercept_))
+        stats[f"{s}_sharpness_coef"] = [sharp_model.coef_[0], sharp_model.intercept_]
+    df["sharpness"] = (df["bullet_sharpness"] + df["blitz_sharpness"] + df["rapid_sharpness"] + df["classical_sharpness"]) / 4
+    ss = StandardScaler()
+    df["sharpness"] = ss.fit_transform(df["sharpness"].values.reshape(-1, 1))
+    stats["sharpness_ss"] = [ss.mean_[0], ss.scale_[0]]
 
     # get popularity
     df["popularity"] = MinMaxScaler().fit_transform(np.log(df["games"].values.reshape(-1, 1)))
@@ -76,8 +81,7 @@ def preprocess(fn):
                                     ((df["rapid_score_rate"]-rapid_avg)*df["rapid_games"] + (df["classical_score_rate"]-classical_avg)*df["classical_games"])/(df["rapid_games"]+df["classical_games"])
     df["time_pressure_advantage"] = StandardScaler().fit_transform(df["time_pressure_advantage"].values.reshape(-1, 1))
 
-    df.reindex()
-    df.to_csv(f"./backend/db/chess/db_{fn}_processed.csv", na_rep="NaN", encoding="utf-8", index=True, index_label="id")
+    df.to_csv(f"./backend/db/chess/db_{fn}_processed.csv", na_rep="NaN", encoding="utf-8", index=False)
     with open(f"./backend/db/chess/stats_{fn}.json", "w") as f:
         json.dump(stats, f)
     print(f"--- processed: {fn} ---")

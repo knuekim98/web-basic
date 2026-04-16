@@ -1,6 +1,7 @@
 import json
 import time
 import requests
+from collections import defaultdict
 import os
 from dotenv import load_dotenv
 
@@ -45,15 +46,18 @@ for fn in FILENAME:
         
 moves_black.sort(); moves_white.sort()
 parent = {}
+size = defaultdict(lambda:1)
 def get_trie(moves):
     trie = {}
-    for _, m in moves:
+    for move_num, m in moves:
+        if move_num > 6: break
         p = None
         now = trie
         while 1:
             key = None
             for k in now:
                 if m.startswith(k):
+                    size[k] += 1
                     key = k
                     break
             if key is None: break
@@ -75,29 +79,30 @@ def get_data(url):
     return json.loads(res.text)
 
 
-# filter opening: 3~6 moves, >500000 games, 20~80% winrate 
+# filter opening: ~6 moves, >50000 games, 30~70% winrate 
 def select_opening(moves, opening_original, fn):
-    opening = {}
-    count = 0
+    with open(f"./backend/datasets/chess/eco_{fn}_selected.json", "r") as f:
+        opening = json.load(f)
     for i, (_, m) in enumerate(moves):
         fen = moves_to_fen[m]
-        if not (3 <= opening_original[fen]["move_num"] <= 6): continue
+        if (opening_original[fen]["move_num"] > 6) or (opening_original[fen]["move_num"] < 3 and size[m] >= 100): continue
+        if (opening_original[fen]["move_num"] >= 3): continue
+
         data = get_data(f"https://explorer.lichess.org/lichess?fen={fen}&topGames=0&recentGames=0&since=2015-01&speeds=blitz,rapid,classical&ratings=1400,1600,1800,2000,2200,2500")
         games = data["white"]+data["draws"]+data["black"]
 
-        if games >= 500000 and 0.2 <= data["white"]/games <= 0.8 and 0.2 <= data["black"]/games <= 0.8:
+        if games >= 50000 and 0.3 <= data["white"]/games <= 0.7 and 0.3 <= data["black"]/games <= 0.7:
             opening[fen] = opening_original[fen]
-            opening[fen]["id"] = count
+            opening[fen]["id"] = i
             opening[fen]["child"] = []
             
             if fen in parent:
                 p = parent[fen]
                 if p in opening:
-                    opening[p]["child"].append(count)
+                    opening[p]["child"].append(i)
                     opening[fen]["parent"] = opening[p]["id"]
 
-            print("selected: ", opening[fen]["name"], opening[fen]["moves"], i, count)
-            count += 1
+            print("selected:", opening[fen]["name"], opening[fen]["moves"], i)
     
     with open(f"./backend/datasets/chess/eco_{fn}_selected.json", "w") as f:
         json.dump(opening, f, indent=4)
