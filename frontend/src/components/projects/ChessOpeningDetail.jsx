@@ -434,7 +434,7 @@ const ChessOpeningDetail = () => {
               <MetricSlider value={opening.sharpness} config={metrics_config.sharpness} />
               <MetricSlider value={opening.elo_sensitivity} config={metrics_config.elo_sensitivity} />
               <MetricSlider value={opening.time_pressure_advantage} config={metrics_config.time_pressure_advantage} />
-              <MetricSlider value={opening.popularity} config={metrics_config.popularity} isZScore={false} />
+              <MetricSlider value={opening.popularity} config={metrics_config.popularity} />
             </div>
           </div>
         </div>

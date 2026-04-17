@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import json
 
@@ -59,8 +59,13 @@ def preprocess(fn):
     stats["sharpness_ss"] = [ss.mean_[0], ss.scale_[0]]
 
     # get popularity
-    df["popularity"] = MinMaxScaler().fit_transform(np.log(df["games"].values.reshape(-1, 1)))
-
+    df["move_num"] = df["moves"].str.split('.').str[-2].str.strip().str.split(' ').str[-1]
+    df["games_by_move_num"] = df.groupby("move_num")["games"].transform('sum')
+    df["popularity"] = np.log(df['games'] / df['games_by_move_num'] + 1e-10)
+    scaler = lambda x: (x - x.mean()) / x.std()
+    df["popularity"] = df.groupby("move_num")["popularity"].transform(scaler)
+    df.drop(columns=['move_num', 'games_by_move_num'], inplace=True)
+    
     # get elo sensitivity
     ES_TARGET_RATINGS = [1200, 1400, 1600, 1800, 2000, 2200]
     ES_X = np.array(ES_TARGET_RATINGS).reshape(-1, 1)

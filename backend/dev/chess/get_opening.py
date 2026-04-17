@@ -85,8 +85,7 @@ def select_opening(moves, opening_original, fn):
         opening = json.load(f)
     for i, (_, m) in enumerate(moves):
         fen = moves_to_fen[m]
-        if (opening_original[fen]["move_num"] > 6) or (opening_original[fen]["move_num"] < 3 and size[m] >= 100): continue
-        if (opening_original[fen]["move_num"] >= 3): continue
+        if opening_original[fen]["move_num"] > 6: continue
 
         data = get_data(f"https://explorer.lichess.org/lichess?fen={fen}&topGames=0&recentGames=0&since=2015-01&speeds=blitz,rapid,classical&ratings=1400,1600,1800,2000,2200,2500")
         games = data["white"]+data["draws"]+data["black"]
@@ -95,6 +94,7 @@ def select_opening(moves, opening_original, fn):
             opening[fen] = opening_original[fen]
             opening[fen]["id"] = i
             opening[fen]["child"] = []
+            opening[fen]["unshow"] = int(size[m] >= 100)
             
             if fen in parent:
                 p = parent[fen]

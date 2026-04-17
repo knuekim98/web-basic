@@ -77,9 +77,11 @@ async def chess_query(
     sortby: str = Body(default="games"),
     ascending: bool = Body(default=True),
     color: str = Body(default="white"),
-    search: str = Body(default="")
+    search: str = Body(default=""),
+    unshow: bool = Body(default=True)
 ):
     df = df_chess_white if color=="white" else df_chess_black
+    if unshow: df = df[df["unshow"] != 1]
     if isinstance(columns, str):
         if columns == "all": columns = df.columns
         else: raise HTTPException(status_code=400, detail="Invalid columns requested")
@@ -128,11 +130,11 @@ async def chess_analyze(request_data: AnalyzeRequest):
     username = request_data.username
     games = request_data.games
 
+    analyzed_count = 0
+    opening_result = {"white": {}, "black": {}}
     speed_count = {"bullet":0, "blitz":0, "rapid":0, "classical":0}
-    processed_games = []
+    sharpness = {}
     for data in games:
-        if data.get("variant") != "standard": continue
-
         game = {
             "speed": data["perf"],
             "result": data.get("winner", "draws"),
@@ -141,6 +143,7 @@ async def chess_analyze(request_data: AnalyzeRequest):
         speed_count[game["speed"]] += 1
         search_df = df_chess_white if game["me"] == "white" else df_chess_black
 
+        # get opening
         game["opening"] = []
         moves_list = data["moves"].split()
         board = chess.Board()
@@ -153,29 +156,52 @@ async def chess_analyze(request_data: AnalyzeRequest):
             match = search_df[search_df["fen"] == fen]
             if not match.empty:
                 game["opening"].append(match.iloc[0].to_dict())
-        processed_games.append(game)
-    
-    print(sum(game["opening"] != [] and game["me"]=="white" for game in processed_games), '/', sum(game["me"] == "white" for game in processed_games))
-
-    opening_result = {"white": {}, "black": {}}
-    for game in processed_games:
-        if not game["opening"]: continue
-        me = game["me"]
-        result = game["result"]
-        main_opening = game["opening"][0]
-        main_opening_id = main_opening["id"]
-        if main_opening_id not in opening_result[me]:
-            opening_result[me][main_opening_id] = {"name": main_opening["name"], "white": 0, "draws": 0, "black": 0, "variations":{}}
-        opening_result[me][main_opening_id][result] += 1
         
-        for opening in game["opening"][1:]:
-            opening_id = opening["id"]
-            if opening_id not in opening_result[me][main_opening_id]["variations"]:
-                opening_result[me][main_opening_id]["variations"][opening_id] = {"name": opening["name"], "white": 0, "draws": 0, "black": 0}
-            opening_result[me][main_opening_id]["variations"][opening_id][result] += 1
+        # construct opening_result
+        if game["opening"]:
+            me = game["me"]
+            result = game["result"]
+
+            main_idx = -1
+            for i, opening in enumerate(game["opening"]):
+                if opening["unshow"] != 1: 
+                    main_idx = i
+                    break
+            
+            if main_idx != -1:
+                main_opening = game["opening"][main_idx]
+                main_opening_id = main_opening["id"]
+                if main_opening_id not in opening_result[me]:
+                    opening_result[me][main_opening_id] = {"name": main_opening["name"], "white": 0, "draws": 0, "black": 0, "variations":{}}
+                opening_result[me][main_opening_id][result] += 1
+                
+                for opening in game["opening"][(main_idx+1):]:
+                    opening_id = opening["id"]
+                    if opening_id not in opening_result[me][main_opening_id]["variations"]:
+                        opening_result[me][main_opening_id]["variations"][opening_id] = {"name": opening["name"], "white": 0, "draws": 0, "black": 0}
+                    opening_result[me][main_opening_id]["variations"][opening_id][result] += 1
+
+        # calculate sharpness
+        if game["opening"]: 
+            g = game["opening"][-1]
+            if g["id"] not in sharpness: sharpness[g["id"]] = [g["sharpness"], 0, 0]
+            sharpness[g["id"]][1] += 1
+            if game["me"] == game["result"]: sharpness[g["id"]][2] += 1
+            elif game["result"] == "draws": sharpness[g["id"]][2] += 0.5
+
+        analyzed_count += 1
+    
+    X = [sharpness[k][0] for k in sharpness]
+    Y = [sharpness[k][2]/sharpness[k][1] for k in sharpness]
+    S = [sharpness[k][1]*3 for k in sharpness]
+    import matplotlib.pyplot as plt
+    plt.scatter(X,Y,s=S)
+    plt.show()
+    
+    # print(sum(game["opening"] != [] and game["me"]=="white" for game in processed_games), '/', sum(game["me"] == "white" for game in processed_games))   
             
     return {
-        "total_count": len(processed_games),
+        "total_count": analyzed_count,
         "speed_count": speed_count,
         "opening_result": opening_result
     }
