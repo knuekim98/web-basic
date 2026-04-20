@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn.functional as F
+from sklearn.linear_model import LinearRegression
+
 from PIL import Image
 from fastapi import FastAPI, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -133,13 +135,24 @@ async def chess_analyze(request_data: AnalyzeRequest):
     analyzed_count = 0
     opening_result = {"white": {}, "black": {}}
     speed_count = {"bullet":0, "blitz":0, "rapid":0, "classical":0}
-    sharpness = {}
+    
+    sharpness = []
+    popularity = []
+
+    games_processed = []
     for data in games:
         game = {
             "speed": data["perf"],
             "result": data.get("winner", "draws"),
             "me": "white" if data["players"]["white"]["user"]["id"] == username else "black",
         }
+        if game["me"] == game["result"]: game["score"] = 1
+        elif game["result"] == "draws": game["score"] = 0.5
+        else: game["score"] = 0
+        rd = data["players"]["white"]["rating"] - data["players"]["black"]["rating"]
+        if game["me"] == "black": rd = -rd
+        game["rating_diff"] = rd
+
         speed_count[game["speed"]] += 1
         search_df = df_chess_white if game["me"] == "white" else df_chess_black
 
@@ -157,11 +170,12 @@ async def chess_analyze(request_data: AnalyzeRequest):
             if not match.empty:
                 game["opening"].append(match.iloc[0].to_dict())
         
-        # construct opening_result
         if game["opening"]:
             me = game["me"]
             result = game["result"]
+            ss = stats_white if me == "white" else stats_black
 
+            # construct opening_result
             main_idx = -1
             for i, opening in enumerate(game["opening"]):
                 if opening["unshow"] != 1: 
@@ -180,28 +194,79 @@ async def chess_analyze(request_data: AnalyzeRequest):
                     if opening_id not in opening_result[me][main_opening_id]["variations"]:
                         opening_result[me][main_opening_id]["variations"][opening_id] = {"name": opening["name"], "white": 0, "draws": 0, "black": 0}
                     opening_result[me][main_opening_id]["variations"][opening_id][result] += 1
+                    
+            # measure popularity
+            pop_z = sum((o["popularity"] - ss["popularity_ss"][0]) / ss["popularity_ss"][1] for o in game["opening"]) / len(game["opening"])
+            popularity.append(pop_z)
 
-        # calculate sharpness
-        if game["opening"]: 
-            g = game["opening"][-1]
-            if g["id"] not in sharpness: sharpness[g["id"]] = [g["sharpness"], 0, 0]
-            sharpness[g["id"]][1] += 1
-            if game["me"] == game["result"]: sharpness[g["id"]][2] += 1
-            elif game["result"] == "draws": sharpness[g["id"]][2] += 0.5
-
+            # measure sharpness
+            last_opening = game["opening"][-1]
+            sharp_z = (last_opening["sharpness"] - ss["sharpness_ss"][0]) / ss["sharpness_ss"][1]
+            sharpness.append(sharp_z)
+            
         analyzed_count += 1
+        games_processed.append(game)
+
     
-    X = [sharpness[k][0] for k in sharpness]
-    Y = [sharpness[k][2]/sharpness[k][1] for k in sharpness]
-    S = [sharpness[k][1]*3 for k in sharpness]
-    import matplotlib.pyplot as plt
-    plt.scatter(X,Y,s=S)
-    plt.show()
-    
-    # print(sum(game["opening"] != [] and game["me"]=="white" for game in processed_games), '/', sum(game["me"] == "white" for game in processed_games))   
+    # emphirical scaling
+    A1 = 0.8
+    A2 = 0.77
+    user_popularity = sum(popularity)/(analyzed_count ** A1)
+    user_sharpness = sum(sharpness)/(analyzed_count ** A2)
+
+    def get_metric_stats(metric_key, threshold):
+        high_score = 0
+        high_weight = 0
+        low_score = 0
+        low_weight = 0
+        
+        high_op_counts = {}
+        low_op_counts = {}
+
+        for game in games_processed:
+            n = sum(o["unshow"] != 1 for o in game["opening"])
+            if n == 0: continue
+            weight = 1.0 / n
+            for op in game["opening"]:
+                if op["unshow"] == 1: continue
+                val = op[metric_key]
+                op_info = (op["id"], op["name"], game["me"])
+                
+                if val > threshold:
+                    high_score += game["score"] * weight
+                    high_weight += weight
+                    high_op_counts[op_info] = high_op_counts.get(op_info, 0) + 1
+                else:
+                    low_score += game["score"] * weight
+                    low_weight += weight
+                    low_op_counts[op_info] = low_op_counts.get(op_info, 0) + 1
+        
+        print(metric_key, threshold, sum(low_op_counts.values()), sum(high_op_counts.values()))
+
+        def get_top(counts):
+            sorted_ops = sorted(counts.items(), key=lambda x: x[1], reverse=True)[:5]
+            return [{"id": k[0], "name": k[1], "color": k[2]} for k, _ in sorted_ops]
+
+        return {
+            "win_rate_high": round((high_score / high_weight * 100), 1) if high_weight > 0 else 0,
+            "win_rate_low": round((low_score / low_weight * 100), 1) if low_weight > 0 else 0,
+            "openings_high": get_top(high_op_counts),
+            "openings_low": get_top(low_op_counts)
+        }
+
+    stats_popularity = get_metric_stats("popularity", user_popularity)
+    stats_sharpness = get_metric_stats("sharpness", user_sharpness)
             
     return {
         "total_count": analyzed_count,
         "speed_count": speed_count,
+        "insight": {
+            "popularity": user_popularity, 
+            "sharpness": user_sharpness
+        },
+        "insight_stats": {
+            "popularity": stats_popularity,
+            "sharpness": stats_sharpness
+        },
         "opening_result": opening_result
     }

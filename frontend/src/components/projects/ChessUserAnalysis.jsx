@@ -13,6 +13,8 @@ const ChessUserAnalysis = () => {
   const [speedCount, setSpeedCount] = useState(null);
   const [analyzedCount, setAnalyzedCount] = useState(200);
   const [userData, setUserData] = useState(null);
+  const [insight, setInsight] = useState(null);
+  const [insightStats, setInsightStats] = useState(null);
   const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
@@ -50,6 +52,8 @@ const ChessUserAnalysis = () => {
         setData(response.data.opening_result);
         setAnalyzedCount(response.data.total_count);
         setSpeedCount(response.data.speed_count);
+        setInsight(response.data.insight);
+        setInsightStats(response.data.insight_stats);
       } catch (error) {
         console.error("Analysis error:", error);
       } finally {
@@ -140,6 +144,26 @@ const ChessUserAnalysis = () => {
         <RepertoireSection title="White Repertoire" groups={processResult(data?.white)} myColor="white" />
         <RepertoireSection title="Black Repertoire" groups={processResult(data?.black)} myColor="black" />
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mt-24">
+        <MetricAnalysisCard 
+          title="Opening Sharpness"
+          value={insight?.sharpness}
+          stats={insightStats?.sharpness}
+          labels={["Solid", "Sharp"]}
+          theme="orange"
+          description="얼마나 공격적이고 복잡한 전술적 오프닝을 선택하는지 나타냅니다."
+        />
+        <MetricAnalysisCard 
+          title="Opening Popularity"
+          value={insight?.popularity}
+          stats={insightStats?.popularity}
+          labels={["Rare", "Famous"]}
+          theme="emerald"
+          description="남들이 자주 두는 정석(Mainline)을 얼마나 따르는지 나타냅니다."
+        />
+      </div>
+
     </div>
   );
 };
@@ -270,17 +294,138 @@ const RatingItem = ({ icon: Icon, label, color, rating, prov, total, samples }) 
     <div className="flex items-center gap-4 border-t border-white/5 pt-2">
       <div className="flex flex-col">
         <span className="text-[11px] font-mono font-bold text-zinc-500">{(total || 0).toLocaleString()}</span>
-        <span className="text-[8px] text-zinc-700 uppercase font-black tracking-tighter">Lifetime</span>
+        <span className="text-[8px] text-zinc-700 uppercase font-black tracking-tighter">Total</span>
       </div>
       <div className="w-px h-5 bg-white/5" />
       <div className="flex flex-col">
         <span className={`text-[11px] font-mono font-bold ${samples > 0 ? 'text-emerald-500/80' : 'text-zinc-800'}`}>
           {samples || 0}
         </span>
-        <span className="text-[8px] text-zinc-700 uppercase font-black tracking-tighter">Samples</span>
+        <span className="text-[8px] text-zinc-700 uppercase font-black tracking-tighter">Recent</span>
       </div>
     </div>
   </div>
+);
+
+const MetricAnalysisCard = ({ title, value, stats, labels, theme, description }) => {
+  if (!stats) return null;
+
+  const isOrange = theme === 'orange';
+  const themeColor = isOrange ? 'text-orange-500' : 'text-emerald-500';
+  const themeBg = isOrange ? 'bg-orange-500' : 'bg-emerald-500';
+  const themeBorder = isOrange ? 'border-orange-500/20' : 'border-emerald-500/20';
+  const themeShadow = isOrange ? 'shadow-orange-500/20' : 'shadow-emerald-500/20';
+
+  const getPosition = (val) => {
+    const clamped = Math.min(Math.max(val, -2.5), 2.5);
+    return ((clamped + 2.5) / 5) * 100;
+  };
+
+  const betterOnHigh = stats.win_rate_high > stats.win_rate_low;
+
+  return (
+    <div className="bg-zinc-900/40 border border-white/5 rounded-[3rem] p-10 flex flex-col gap-10 relative overflow-hidden">
+      <div className={`absolute -top-24 -right-24 w-64 h-64 ${themeBg} opacity-[0.03] blur-[100px] pointer-events-none`} />
+
+      {/* header */}
+      <div className="relative">
+        <div className="flex items-center gap-3 mb-3">
+          <div className={`w-1 h-4 ${themeBg} rounded-full`} />
+          <h4 className="text-2xl font-black text-gray-50 tracking-tighter italic uppercase">{title}</h4>
+        </div>
+        <p className="text-zinc-500 text-sm leading-relaxed max-w-md">{description}</p>
+      </div>
+
+      {/* slider */}
+      <div className="flex flex-col gap-3">
+        <div className="relative w-full h-5 flex items-center mt-4">
+          <div className="h-1.5 w-full bg-zinc-800/50 rounded-full relative overflow-hidden">
+            <div className={`absolute inset-0 opacity-20 bg-gradient-to-r from-zinc-700 via-zinc-500 to-${isOrange ? 'orange-500' : 'emerald-500'}`} />
+            <div className="absolute left-1/2 top-0 w-[1.5px] h-full bg-white/20 z-10" />
+          </div>
+          
+          <div 
+            className={`absolute w-5 h-5 ${themeBg} rounded-full border-[4px] border-zinc-950 ${themeShadow} shadow-[0_0_15px] transition-all duration-700 z-20`}
+            style={{ 
+              left: `${getPosition(value)}%`, 
+              top: '50%',
+              transform: 'translate(-50%, -50%)' 
+            }}
+          />
+        </div>
+
+        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-zinc-600">
+          <span>{labels[0]}</span>
+          <div className="flex items-center gap-1.5 bg-white/[0.03] px-3 py-1 rounded-full border border-white/5">
+            <span className={`text-xs font-mono font-black ${themeColor} italic`}>
+              {value?.toFixed(2)}
+            </span>
+          </div>
+          <span>{labels[1]}</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-px bg-white/5 rounded-3xl overflow-hidden border border-white/5">
+        {/* left */}
+        <div className={`p-8 bg-zinc-900/60 flex flex-col gap-6 relative ${!betterOnHigh ? `ring-1 ring-inset ${isOrange ? 'ring-orange-500/20' : 'ring-emerald-500/20'}` : ''}`}>
+          {!betterOnHigh && (
+            <div className={`absolute top-4 right-4 ${isOrange ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'} text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter border`}>
+              Better Performance
+            </div>
+          )}
+          <div className="mt-2">
+            <p className="text-[10px] text-zinc-500 font-bold uppercase mb-1">More {labels[0]}</p>
+            <div className="flex items-baseline gap-2">
+              <span className={`text-4xl font-mono font-black ${!betterOnHigh ? themeColor : ''} italic`}>{stats.win_rate_low}%</span>
+              <span className="text-[9px] text-zinc-600 font-bold uppercase">Win Rate</span>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className="flex flex-col gap-2">
+              {stats.openings_low.slice(0, 4).map((op) => (
+                <OpeningMiniLink key={op.id} op={op} theme={theme} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* right */}
+        <div className={`p-8 bg-zinc-900/60 flex flex-col gap-6 relative ${betterOnHigh ? `ring-1 ring-inset ${isOrange ? 'ring-orange-500/20' : 'ring-emerald-500/20'}` : ''}`}>
+          {betterOnHigh && (
+            <div className={`absolute top-4 right-4 ${isOrange ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'} text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter border`}>
+              Better Performance
+            </div>
+          )}
+          <div className="mt-2">
+            <p className="text-[10px] text-zinc-500 font-bold uppercase mb-1">More {labels[1]}</p>
+            <div className="flex items-baseline gap-2">
+              <span className={`text-4xl font-mono font-black ${betterOnHigh ? themeColor : ''} italic`}>{stats.win_rate_high}%</span>
+              <span className="text-[9px] text-zinc-600 font-bold uppercase">Win Rate</span>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className="flex flex-col gap-2">
+              {stats.openings_high.slice(0, 4).map((op) => (
+                <OpeningMiniLink key={op.id} op={op} theme={theme} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const OpeningMiniLink = ({ op, theme }) => (
+  <button 
+    onClick={() => window.open(`${window.location.origin}${window.location.pathname}#/chess/opening?id=${op.id}&color=${op.color}`, '_blank')}
+    className="group flex items-center justify-between text-left hover:bg-white/[0.03] p-1.5 rounded-xl transition-all border border-transparent hover:border-white/5"
+  >
+    <span className={`text-[11px] text-zinc-400 group-hover:${theme === 'orange' ? 'text-orange-400' : 'text-emerald-400'} truncate pr-2 transition-colors`}>
+      {op.name}
+    </span>
+    <ExternalLink size={10} className="text-zinc-800 group-hover:text-zinc-400 shrink-0 transition-colors" />
+  </button>
 );
 
 export default ChessUserAnalysis;

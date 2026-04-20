@@ -4,7 +4,21 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import json
+import os, time
+import requests
+from dotenv import load_dotenv
 
+load_dotenv("./backend/dev/chess/.env.chess")
+TOKEN = os.environ.get("API_TOKEN")
+def get_data(url):
+    res = requests.get(url, headers={"Authorization": f"Bearer {TOKEN}"})
+    while res.status_code != 200:
+        time.sleep(1)
+        res = requests.get(url)
+    return json.loads(res.text)
+
+data = get_data(f"https://explorer.lichess.org/lichess?topGames=0&recentGames=0&since=2015-01&speeds=blitz,rapid,classical&ratings=1400,1600,1800,2000,2200,2500")
+TOTAL_GAME = data["white"] + data["draws"] + data["black"]
 RATINGS = [0,1000,1200,1400,1600,1800,2000,2200,2500]
 SPEEDS = ["bullet","blitz","rapid","classical"]
 
@@ -44,8 +58,8 @@ def preprocess(fn):
     stats[f"draws_hist"] = draws_hist.tolist()
     
     # get selection rate/rank
-    df["selection_rate"] = df['games'] / df["games"].sum() * 100
-    df["selection_rate_rank"] = df["selection_rate"].rank(ascending=False, method='min').astype(int)
+    df["selection_rate"] = df["games"] / TOTAL_GAME * 100
+    df.loc[df["unshow"] != 1, 'selection_rate_rank'] = df.loc[df["unshow"] != 1, 'games'].rank(ascending=False, method='min').astype(int)
 
     # get sharpness
     for s in SPEEDS:
@@ -64,6 +78,9 @@ def preprocess(fn):
     df["popularity"] = np.log(df['games'] / df['games_by_move_num'] + 1e-10)
     scaler = lambda x: (x - x.mean()) / x.std()
     df["popularity"] = df.groupby("move_num")["popularity"].transform(scaler)
+    GLOBAL_MEAN = np.average(df['popularity'], weights=df['games'])
+    GLOBAL_SD = np.sqrt(np.average((df['popularity'] - GLOBAL_MEAN)**2, weights=df['games']))
+    stats["popularity_ss"] = [GLOBAL_MEAN, GLOBAL_SD]
     df.drop(columns=['move_num', 'games_by_move_num'], inplace=True)
     
     # get elo sensitivity

@@ -39,9 +39,9 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 const metrics_config = {
   sharpness: { label: "Sharpness", left: "Solid", right: "Sharp", color: "text-orange-400", bgColor: "bg-orange-400" },
+  popularity: { label: "Popularity", left: "Rare", right: "Famous", color: "text-emerald-400", bgColor: "bg-emerald-400" },
   elo_sensitivity: { label: "Elo Sensitivity", left: "Trap", right: "Robust", color: "text-blue-400", bgColor: "bg-blue-400" },
-  time_pressure_advantage: { label: "Time Control Advantage", left: "Classical", right: "Blitz", color: "text-purple-400", bgColor: "bg-purple-400" },
-  popularity: { label: "Popularity", left: "Rare", right: "Famous", color: "text-emerald-400", bgColor: "bg-emerald-400" }
+  time_pressure_advantage: { label: "Time Control Advantage", left: "Classical", right: "Blitz", color: "text-purple-400", bgColor: "bg-purple-400" }
 };
 
 const MetricSlider = ({ value, config, isZScore = true }) => {
@@ -432,9 +432,9 @@ const ChessOpeningDetail = () => {
             <h3 className="text-[13px] text-zinc-500 uppercase tracking-[0.3em] font-bold mb-8">Insights</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-10">
               <MetricSlider value={opening.sharpness} config={metrics_config.sharpness} />
+              <MetricSlider value={opening.popularity} config={metrics_config.popularity} />
               <MetricSlider value={opening.elo_sensitivity} config={metrics_config.elo_sensitivity} />
               <MetricSlider value={opening.time_pressure_advantage} config={metrics_config.time_pressure_advantage} />
-              <MetricSlider value={opening.popularity} config={metrics_config.popularity} />
             </div>
           </div>
         </div>
