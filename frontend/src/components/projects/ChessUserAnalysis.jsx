@@ -97,7 +97,7 @@ const ChessUserAnalysis = () => {
         </h2>
         <p className="text-zinc-500 text-sm mb-16 flex items-center gap-2">
           <Search size={14} className="text-zinc-500" />
-          Analyzed the last <span className="text-zinc-300 font-bold">{analyzedCount}</span> rated games from your history.
+          Analyzed the last <span className="text-zinc-300 font-bold">{analyzedCount}</span> rated games from user history.
         </p>
       </div>
 
@@ -141,8 +141,8 @@ const ChessUserAnalysis = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-        <RepertoireSection title="White Repertoire" groups={processResult(data?.white)} myColor="white" />
-        <RepertoireSection title="Black Repertoire" groups={processResult(data?.black)} myColor="black" />
+        <RepertoireSection title="White Repertoire top 10" groups={processResult(data?.white)} myColor="white" />
+        <RepertoireSection title="Black Repertoire top 10" groups={processResult(data?.black)} myColor="black" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mt-24">
@@ -330,7 +330,7 @@ const MetricAnalysisCard = ({ title, value, stats, labels, theme, description })
       {/* header */}
       <div className="relative">
         <div className="flex items-center gap-3 mb-3">
-          <div className={`w-1 h-4 ${themeBg} rounded-full`} />
+          <div className={`w-1 h-6 ${themeBg} rounded-full`} />
           <h4 className="text-2xl font-black text-gray-50 tracking-tighter italic uppercase">{title}</h4>
         </div>
         <p className="text-zinc-500 text-sm leading-relaxed max-w-md">{description}</p>
@@ -374,16 +374,16 @@ const MetricAnalysisCard = ({ title, value, stats, labels, theme, description })
             </div>
           )}
           <div className="mt-2">
-            <p className="text-[10px] text-zinc-500 font-bold uppercase mb-1">More {labels[0]}</p>
+            <p className="text-[10px] text-zinc-400 font-bold uppercase mb-1">More {labels[0]}</p>
             <div className="flex items-baseline gap-2">
-              <span className={`text-4xl font-mono font-black ${!betterOnHigh ? themeColor : ''} italic`}>{stats.win_rate_low}%</span>
+              <span className={`text-4xl font-mono font-black ${!betterOnHigh ? themeColor : ''} italic`}>{stats.win_rate_low.toFixed(1)}%</span>
               <span className="text-[9px] text-zinc-600 font-bold uppercase">Win Rate</span>
             </div>
           </div>
           <div className="space-y-3">
             <div className="flex flex-col gap-2">
               {stats.openings_low.slice(0, 4).map((op) => (
-                <OpeningMiniLink key={op.id} op={op} theme={theme} />
+                <OpeningMiniLink key={op.id} op={op} />
               ))}
             </div>
           </div>
@@ -397,16 +397,16 @@ const MetricAnalysisCard = ({ title, value, stats, labels, theme, description })
             </div>
           )}
           <div className="mt-2">
-            <p className="text-[10px] text-zinc-500 font-bold uppercase mb-1">More {labels[1]}</p>
+            <p className="text-[10px] text-zinc-400 font-bold uppercase mb-1">More {labels[1]}</p>
             <div className="flex items-baseline gap-2">
-              <span className={`text-4xl font-mono font-black ${betterOnHigh ? themeColor : ''} italic`}>{stats.win_rate_high}%</span>
+              <span className={`text-4xl font-mono font-black ${betterOnHigh ? themeColor : ''} italic`}>{stats.win_rate_high.toFixed(1)}%</span>
               <span className="text-[9px] text-zinc-600 font-bold uppercase">Win Rate</span>
             </div>
           </div>
           <div className="space-y-3">
             <div className="flex flex-col gap-2">
               {stats.openings_high.slice(0, 4).map((op) => (
-                <OpeningMiniLink key={op.id} op={op} theme={theme} />
+                <OpeningMiniLink key={op.id} op={op} />
               ))}
             </div>
           </div>
@@ -416,12 +416,12 @@ const MetricAnalysisCard = ({ title, value, stats, labels, theme, description })
   );
 };
 
-const OpeningMiniLink = ({ op, theme }) => (
+const OpeningMiniLink = ({ op }) => (
   <button 
     onClick={() => window.open(`${window.location.origin}${window.location.pathname}#/chess/opening?id=${op.id}&color=${op.color}`, '_blank')}
     className="group flex items-center justify-between text-left hover:bg-white/[0.03] p-1.5 rounded-xl transition-all border border-transparent hover:border-white/5"
   >
-    <span className={`text-[11px] text-zinc-400 group-hover:${theme === 'orange' ? 'text-orange-400' : 'text-emerald-400'} truncate pr-2 transition-colors`}>
+    <span className={`text-[11px] text-zinc-400 truncate pr-2 transition-colors`}>
       {op.name}
     </span>
     <ExternalLink size={10} className="text-zinc-800 group-hover:text-zinc-400 shrink-0 transition-colors" />

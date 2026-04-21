@@ -94,7 +94,6 @@ def select_opening(moves, opening_original, fn):
             opening[fen] = opening_original[fen]
             opening[fen]["id"] = i
             opening[fen]["child"] = []
-            opening[fen]["unshow"] = int(size[m] >= 100)
             
             if fen in parent:
                 p = parent[fen]

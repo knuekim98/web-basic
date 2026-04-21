@@ -160,15 +160,17 @@ async def chess_analyze(request_data: AnalyzeRequest):
         game["opening"] = []
         moves_list = data["moves"].split()
         board = chess.Board()
-        for depth in range(12):
-            if depth >= len(moves_list): break
-            board.push_san(moves_list[depth])
-            if depth&1 == (game["me"]=="white"): continue
+        try:
+            for depth in range(12):
+                if depth >= len(moves_list): break
+                board.push_san(moves_list[depth])
+                if depth&1 == (game["me"]=="white"): continue
 
-            fen = board.fen()
-            match = search_df[search_df["fen"] == fen]
-            if not match.empty:
-                game["opening"].append(match.iloc[0].to_dict())
+                fen = board.fen()
+                match = search_df[search_df["fen"] == fen]
+                if not match.empty:
+                    game["opening"].append(match.iloc[0].to_dict())
+        except chess.IllegalMoveError: continue
         
         if game["opening"]:
             me = game["me"]
@@ -209,8 +211,8 @@ async def chess_analyze(request_data: AnalyzeRequest):
 
     
     # emphirical scaling
-    A1 = 0.8
-    A2 = 0.77
+    A1 = 0.84
+    A2 = 0.73
     user_popularity = sum(popularity)/(analyzed_count ** A1)
     user_sharpness = sum(sharpness)/(analyzed_count ** A2)
 

@@ -31,7 +31,6 @@ def make_db(opening, fn, start):
             for s in SPEEDS: cl.append(f"{s}_avg")
             for r in RATINGS: cl += [f"{r}_white", f"{r}_draws", f"{r}_black"]
             for s in SPEEDS: cl += [f"{s}_white", f"{s}_draws", f"{s}_black"]
-            cl.append("unshow")
             csv.writer(f).writerow(cl)
 
     with open(f"./backend/db/chess/db_{fn}_selected.csv", "a+", newline='', encoding='utf-8') as f:
@@ -65,8 +64,6 @@ def make_db(opening, fn, start):
             for s in SPEEDS:
                 data = get_data(f"https://explorer.lichess.org/lichess?fen={fen}&topGames=0&recentGames=0&since=2015-01&speeds={s}&ratings=1400,1600,1800,2000,2200,2500")
                 line += [data["white"], data["draws"], data["black"]]
-            
-            line.append(opening[fen]["unshow"])
 
             writer.writerow(line)
             f.flush()

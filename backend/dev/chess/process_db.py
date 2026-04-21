@@ -22,6 +22,9 @@ TOTAL_GAME = data["white"] + data["draws"] + data["black"]
 RATINGS = [0,1000,1200,1400,1600,1800,2000,2200,2500]
 SPEEDS = ["bullet","blitz","rapid","classical"]
 
+UNSHOW_LIST = {"white": [2, 9, 11, 13, 159, 208, 256, 276],
+               "black": [58, 67, 72, 93, 511]}
+
 def preprocess(fn):
     df = pd.read_csv(f"./backend/db/chess/db_{fn}_selected.csv", encoding="utf-8")
     stats = {"total": df.shape[0]}
@@ -31,6 +34,7 @@ def preprocess(fn):
     df["white_rate"] = df["white"] / df["games"] * 100
     df["draws_rate"] = df["draws"] / df["games"] * 100
     df["black_rate"] = df["black"] / df["games"] * 100
+    df["unshow"] = df['id'].isin(UNSHOW_LIST[fn]).astype(int)
 
     for r in RATINGS:
         df[f"{r}_games"] = df[f"{r}_white"] + df[f"{r}_draws"] + df[f"{r}_black"]
