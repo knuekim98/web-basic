@@ -9,13 +9,13 @@ import {
 import axios from 'axios';
 
 const SpeedRatingItem = ({ icon: Icon, label, value, colorClass }) => (
-  <div className="flex flex-col items-center flex-1 min-w-[120px] p-6 relative group transition-all hover:bg-white/[0.02]">
+  <div className="flex flex-col items-center flex-1 min-w-[70px] p-2 lg:p-6 relative group transition-all hover:bg-white/[0.02]">
     <div className={`mb-3 p-3 rounded-2xl bg-zinc-900 border border-white/5 ${colorClass} group-hover:scale-110 transition-transform`}>
       <Icon size={20} />
     </div>
     <span className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] mb-1 font-bold">{label}</span>
     <span className="text-xl font-mono font-black text-white italic">
-      {value && value > 0 ? Math.round(value) : '—'}
+      {value ? Math.round(value) : '—'}
     </span>
     <div className="absolute right-0 top-1/2 -translate-y-1/2 w-px h-12 bg-white/5 hidden md:block group-last:hidden" />
   </div>

@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn.functional as F
-from sklearn.linear_model import LinearRegression
 
 from PIL import Image
 from fastapi import FastAPI, Body, HTTPException

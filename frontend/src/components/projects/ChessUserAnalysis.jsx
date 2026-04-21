@@ -196,6 +196,9 @@ const RepertoireSection = ({ title, groups, myColor }) => (
 const OpeningGroupCard = ({ group, myColor }) => {
   const [isOpen, setIsOpen] = useState(false);
   
+  const variations = Object.entries(group.variations || {});
+  const hasVariations = variations.length > 0;
+
   const winCount = myColor === 'white' ? group.white : group.black;
   const drawCount = group.draws;
   const lossCount = myColor === 'white' ? group.black : group.white;
@@ -214,10 +217,28 @@ const OpeningGroupCard = ({ group, myColor }) => {
       >
         <td className="py-4 pr-4">
           <div className="flex items-center gap-2">
-            {isOpen ? <ChevronUp size={14} className="text-emerald-500" /> : <ChevronDown size={14} className="text-zinc-600" />}
-            <span className="text-zinc-200 font-bold text-sm group-hover:text-emerald-400 transition-colors">
-              {group.name}
-            </span>
+            {hasVariations ? (
+              isOpen ? <ChevronUp size={14} className="text-emerald-500" /> : <ChevronDown size={14} className="text-zinc-600" />
+            ) : (
+              <ChevronDown size={14} className="text-zinc-500 opacity-30" /> 
+            )}
+            
+            <div className="flex items-center gap-2">
+              <span className={`font-bold text-sm transition-colors ${hasVariations ? 'text-zinc-200 group-hover:text-emerald-400' : 'text-zinc-200'}`}>
+                {group.name}
+              </span>
+              
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(`${window.location.origin}${window.location.pathname}#/chess/opening?id=${group.id}&color=${myColor}`, '_blank');
+                }}
+                className="text-zinc-700 hover:text-emerald-400 transition-colors ml-1"
+                title="Open Details"
+              >
+                <ExternalLink size={12} />
+              </button>
+            </div>
           </div>
         </td>
         <td className="py-4 px-4 text-gray-50 font-bold text-xs text-center">{total}</td>
