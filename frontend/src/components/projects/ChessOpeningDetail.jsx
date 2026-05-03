@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BarChart2, TrendingUp, Loader2, Zap, Flame, Timer, Clock } from 'lucide-react';
+import { ArrowLeft, BarChart2, TrendingUp, Loader2, Zap, Flame, Timer, Clock, ExternalLink } from 'lucide-react';
 import { Chessboard } from 'react-chessboard';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -96,6 +96,90 @@ const MetricSlider = ({ value, config, isZScore = true }) => {
   );
 };
 
+
+const LineageSection = ({ parents, current, children, color, navigate }) => {
+  const getNextMove = (currMoves, childMoves) => {
+    if (!currMoves || !childMoves) return "";
+
+    let diff = childMoves.replace(currMoves, "").trim();
+
+    const currParts = currMoves.split(" ");
+    let lastMoveNum = "";
+    for (let i = currParts.length - 1; i >= 0; i--) {
+      const match = currParts[i].match(/^(\d+)\./);
+      if (match) {
+        lastMoveNum = match[1];
+        break;
+      }
+    }
+
+    if (/^\d+\./.test(diff)) {
+      return diff;
+    } else {
+      return `${lastMoveNum}...${diff}`;
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-8 border-t border-white/5 pt-16">
+      
+      <div className="flex flex-col gap-3">
+        <span className="text-[10px] text-zinc-600 uppercase tracking-[0.3em] font-black">Lineage Path</span>
+        <div className="flex flex-wrap items-center gap-2">
+          {parents.map((p, idx) => (
+            <React.Fragment key={p.id}>
+              <button 
+                onClick={() => navigate(`/chess/opening?id=${p.id}&color=${color}`)}
+                className="text-xs font-bold text-zinc-400 hover:text-emerald-400 transition-colors bg-white/5 px-3 py-1.5 rounded-lg border border-white/5"
+              >
+                {p.name}
+              </button>
+              <span className="text-zinc-700 text-xs">/</span>
+            </React.Fragment>
+          ))}
+          <span className="text-xs font-black text-emerald-500 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20">
+            {current.name}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] text-zinc-600 uppercase tracking-[0.3em] font-black">
+            Next Variations ({children.length})
+          </span>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {children.map((child) => (
+            <button
+              key={child.id}
+              onClick={() => navigate(`/chess/opening?id=${child.id}&color=${color}`)}
+              className="flex items-center justify-between p-3 bg-zinc-900/40 border border-white/5 rounded-xl hover:bg-white/[0.05] hover:border-emerald-500/30 transition-all group"
+            >
+              <div className="flex flex-col gap-0.5 overflow-hidden text-left">
+                <span className="text-[11px] font-black text-emerald-500 italic">
+                  {getNextMove(current.moves, child.moves)}
+                </span>
+                <span className="text-[12px] font-bold text-zinc-300 truncate group-hover:text-white">
+                  {child.name}
+                </span>
+              </div>
+              <ExternalLink size={12} className="text-zinc-700 group-hover:text-emerald-500 shrink-0 ml-2" />
+            </button>
+          ))}
+          {children.length === 0 && (
+            <div className="col-span-full py-4 text-center text-zinc-700 text-[11px] font-mono italic">
+              End of theory line.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 const ChessOpeningDetail = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -103,6 +187,9 @@ const ChessOpeningDetail = () => {
   const color = searchParams.get('color') || 'white';
 
   const [opening, setOpening] = useState(null);
+  const [parents, setParents] = useState(null);
+  const [children, setChildren] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
 
@@ -116,7 +203,9 @@ const ChessOpeningDetail = () => {
           opening_id: opening_id,
           color: color
         });
-        setOpening(response.data);
+        setOpening(response.data.data);
+        setParents(response.data.parents);
+        setChildren(response.data.children);
         setStats((await axios.get(`${API_URL}/api/chess/stats`)).data[color]);
       } catch (error) {
         console.error("Fetch error:", error);
@@ -437,6 +526,14 @@ const ChessOpeningDetail = () => {
               <MetricSlider value={opening.time_pressure_advantage} config={metrics_config.time_pressure_advantage} />
             </div>
           </div>
+
+          <LineageSection 
+            parents={parents} 
+            current={opening} 
+            children={children} 
+            color={color} 
+            navigate={navigate} 
+          />
         </div>
 
       </div>

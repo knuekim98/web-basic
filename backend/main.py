@@ -8,10 +8,12 @@ import torch.nn.functional as F
 from PIL import Image
 from fastapi import FastAPI, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.encoders import jsonable_encoder
 from typing import List, Union
 from pydantic import BaseModel
 import chess
 
+import ast
 import os
 from dotenv import load_dotenv
 load_dotenv("./dev/chess/.env.chess")
@@ -110,8 +112,44 @@ async def chess_query(
 async def chess_opening(opening_id: int = Body(...), color: str = Body(default="white")):
     df = df_chess_white if color=="white" else df_chess_black
     res = df[df["id"] == opening_id]
-    if res.empty: raise HTTPException(status_code=404, detail="Opening not found")
-    return res.fillna('null').iloc[0].to_dict()
+    
+    if res.empty: 
+        raise HTTPException(status_code=404, detail="Opening not found")
+    
+    opening = res.fillna('null').iloc[0].to_dict()
+    m = opening["moves"]
+
+    parents_df = df[df['moves'].apply(lambda x: m.startswith(x) and x != m and x != "")]
+    parents = []
+    for _, row in parents_df.sort_values(by="moves", key=lambda x: x.str.len()).iterrows():
+        parents.append({
+            "id": int(row["id"]),
+            "name": str(row["name"]),
+            "moves": str(row["moves"])
+        })
+    
+    descendants = df[df['moves'].apply(lambda x: x.startswith(m) and x != m)].to_dict('records')
+    children = []
+    for desc in descendants:
+        is_direct = True
+        for other in descendants:
+            if desc['id'] == other['id']: continue
+            if desc['moves'].startswith(other['moves']) and len(other['moves']) < len(desc['moves']):
+                is_direct = False
+                break
+        
+        if is_direct:
+            children.append({
+                "id": int(desc["id"]),
+                "name": str(desc["name"]),
+                "moves": str(desc["moves"])
+            })
+
+    return {
+        "data": opening, 
+        "parents": parents,
+        "children": children
+    }
 
 
 @app.get("/api/chess/stats")

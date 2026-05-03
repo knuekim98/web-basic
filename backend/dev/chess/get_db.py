@@ -26,7 +26,7 @@ SPEEDS = ["bullet","blitz","rapid","classical"]
 def make_db(opening, fn, start):
     if start == 0:
         with open(f"./backend/db/chess/db_{fn}_selected.csv", "w", newline='') as f:
-            cl = ["id", "fen", "name", "moves", "ECO", "parent", "child"]
+            cl = ["id", "fen", "name", "moves", "ECO"]
             cl += ["white", "draws", "black"]
             for s in SPEEDS: cl.append(f"{s}_avg")
             for r in RATINGS: cl += [f"{r}_white", f"{r}_draws", f"{r}_black"]
@@ -40,8 +40,6 @@ def make_db(opening, fn, start):
 
             # basic info
             line = [opening[fen]["id"], fen, opening[fen]["name"], opening[fen]["moves"], opening[fen]["eco"]]
-            line.append(opening[fen]["parent"] if "parent" in opening[fen] else None)
-            line.append(opening[fen]["child"])
 
             data = get_data(f"https://explorer.lichess.org/lichess?fen={fen}&topGames=0&recentGames=0&since=2015-01&speeds=blitz,rapid,classical&ratings=1400,1600,1800,2000,2200,2500")
             line += [data["white"], data["draws"], data["black"]]

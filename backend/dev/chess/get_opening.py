@@ -93,14 +93,6 @@ def select_opening(moves, opening_original, fn):
         if games >= 50000 and 0.3 <= data["white"]/games <= 0.7 and 0.3 <= data["black"]/games <= 0.7:
             opening[fen] = opening_original[fen]
             opening[fen]["id"] = i
-            opening[fen]["child"] = []
-            
-            if fen in parent:
-                p = parent[fen]
-                if p in opening:
-                    opening[p]["child"].append(i)
-                    opening[fen]["parent"] = opening[p]["id"]
-
             print("selected:", opening[fen]["name"], opening[fen]["moves"], i)
     
     with open(f"./backend/datasets/chess/eco_{fn}_selected.json", "w") as f:
