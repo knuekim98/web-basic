@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import json
 import os, time
 import requests
+import chess
 from dotenv import load_dotenv
 
 load_dotenv("./backend/dev/chess/.env.chess")
@@ -23,13 +24,50 @@ RATINGS = [0,1000,1200,1400,1600,1800,2000,2200,2500]
 SPEEDS = ["bullet","blitz","rapid","classical"]
 
 UNSHOW_LIST = {"white": [2, 9, 11, 13, 159, 208, 256, 276], "black": [58, 67, 72, 93, 511]}
+DUP_LIST = {
+    "white": [208, 52, 31, 26, 43, 417, 379, 27, 1143, 236, 348, 470,
+              303, 1078, 2426, 235, 506, 97, 736, 37, 1537, 1491, 2055,
+              1144, 42, 58, 2749, 452, 2369, 1142, 1490, 1710, 1561, 39,
+              394, 2861, 2047, 2549, 2571, 3049, 3018, 461, 1191, 2650,
+              539, 2846, 969, 1727, 3017, 1754, 3288, 1311, 1894, 2288,
+              994, 2045, 1831, 2824, 2934, 1966, 917, 957, 794, 453, 1187,
+              75, 2791, 2558, 2991, 69, 63, 36, 1762, 2748, 2823, 2825, 1134],
+    "black": [276, 287, 257, 389, 811, 266, 352, 773, 2040, 1254, 1059,
+              2690, 1797, 1529, 1698, 947, 996, 2692, 329, 1053, 173,
+              874, 2039, 615, 199, 2924, 150, 2424, 2614, 2524, 1408,
+              147, 606, 3239, 610, 475, 1573, 1775, 946, 1527, 2212,
+              3242, 1641, 3431, 3525, 1368, 3261, 2925, 3196, 1495,
+              2109, 3262, 740, 2191, 2263, 3484, 3823, 3454, 3392,
+              1774, 2753, 3455, 3843, 1410, 741, 1498, 862, 759, 2650,
+              1710, 1748, 2196, 2365, 1448, 2391, 2514, 3066, 3524,
+              1604, 3453, 410, 1364, 3641, 3832, 1740, 3728, 3851 ]
+}
 MOVES_ADJUST_LIST = {
-                        "white": {
-                            43: "1.e4 c5 2.Nf3", 
-                            52: "1.d4 d5 2.Nf3"
-                        }, 
-                        "black": {}
-                    }
+    "white": {
+        43: "1.e4 c5 2.Nf3",
+        1608: "1.e4 e5 2.Nf3 Nc6 3.Bb5 d6 4.d4",
+        1909: "1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.Nf3 Be7 5.Bf4",
+        2531: "1.e4 e6 2.d4 d5 3.exd5 exd5 4.Nc3 Nf6 5.Bg5",
+        3015: "1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 Nc6 6.Bc4",
+        512: "1.d4 d5 2.Nc3 Nf6 3.f3",
+        2214: "1.c4 c5 2.Nc3 Nc6 3.g3 g6 4.Bg2 Bg7 5.e4",
+        2292: "1.e4 e5 2.Bc4 Nf6 3.d3 Nc6 4.Nc3 Bb4 5.Ne2",
+        1908: "1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.Nf3 Bb4 5.Qa4+",
+    }, 
+    "black": {
+        1572: "1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.Nf3 Bb4",
+        169: "1.d4 d5 2.Nf3 Bg4",
+        155: "1.Nf3 d5 2.g3 Nf6",
+        2006: "1.e4 e5 2.Nf3 Nc6 3.d4 exd4 4.Bc4 Be7",
+        1557: "1.d4 Nf6 2.c4 e6 3.Nc3 Bb4 4.Nf3 b6",
+        2192: "1.c4 c5 2.Nc3 Nc6 3.g3 g6 4.Bg2 Bg7 5.Nf3 Nf6",
+        2719: "1.e4 c5 2.c3 Nf6 3.e5 Nd5 4.d4 e6 5.Nf3 Nc6",
+        2644: "1.d4 f5 2.c4 Nf6 3.g3 e6 4.Bg2 Be7 5.Nf3 O-O",
+        1570: "1.d4 d5 2.c4 e6 3.Nf3 Nf6 4.Bg5 Bb4+",
+        1741: "1.d4 f5 2.c4 Nf6 3.g3 e6 4.Bg2 Be7",
+        2288: "1.d4 d5 2.Nf3 Nf6 3.Bg5 g6 4.e3 Bg7 5.Nbd2 O-O"
+    }
+}
 
 def preprocess(fn):
     df = pd.read_csv(f"./backend/db/chess/db_{fn}_selected.csv", encoding="utf-8")
@@ -40,6 +78,9 @@ def preprocess(fn):
     df["white_rate"] = df["white"] / df["games"] * 100
     df["draws_rate"] = df["draws"] / df["games"] * 100
     df["black_rate"] = df["black"] / df["games"] * 100
+    
+    df.drop(columns=["child", "parent"], inplace=True)
+    df = df[~df["id"].isin(DUP_LIST[fn])]
 
     df["unshow"] = df['id'].isin(UNSHOW_LIST[fn]).astype(int)
     for id, moves in MOVES_ADJUST_LIST[fn].items():
