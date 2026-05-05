@@ -12,8 +12,8 @@ from fastapi.encoders import jsonable_encoder
 from typing import List, Union
 from pydantic import BaseModel
 import chess
+import joblib
 
-import ast
 import os
 from dotenv import load_dotenv
 load_dotenv("./dev/chess/.env.chess")
@@ -34,6 +34,13 @@ from dev.mnist.model import CNN
 mnist = CNN()
 mnist.load_state_dict(torch.load("./models/mnist.pth", weights_only=True))
 mnist.eval()
+
+from dev.chess.recommend.model import ChessNCF
+ITEM_LE = joblib.load("./db/chess/item_le.pkl")
+ITEM_STYLE_TENSOR = torch.load("./db/chess/item_style_tensor.pt", weights_only=True)
+chess_ncf = ChessNCF(num_items=len(ITEM_LE.classes_))
+chess_ncf.load_state_dict(torch.load("./models/chess_ncf.pth", weights_only=True))
+chess_ncf.eval()
 
 
 app = FastAPI()
@@ -183,12 +190,7 @@ async def chess_analyze(request_data: AnalyzeRequest):
             "result": data.get("winner", "draws"),
             "me": "white" if data["players"]["white"]["user"]["id"] == username else "black",
         }
-        if game["me"] == game["result"]: game["score"] = 1
-        elif game["result"] == "draws": game["score"] = 0.5
-        else: game["score"] = 0
-        rd = data["players"]["white"]["rating"] - data["players"]["black"]["rating"]
-        if game["me"] == "black": rd = -rd
-        game["rating_diff"] = rd
+        game["score"] = 1 if game["result"] == game["me"] else (0.5 if game["result"] == "draws" else 0)
 
         speed_count[game["speed"]] += 1
         search_df = df_chess_white if game["me"] == "white" else df_chess_black
@@ -280,7 +282,7 @@ async def chess_analyze(request_data: AnalyzeRequest):
                     low_weight += weight
                     low_op_counts[op_info] = low_op_counts.get(op_info, 0) + 1
         
-        print(metric_key, threshold, sum(low_op_counts.values()), sum(high_op_counts.values()))
+        # print(metric_key, threshold, sum(low_op_counts.values()), sum(high_op_counts.values()))
 
         def get_top(counts):
             sorted_ops = sorted(counts.items(), key=lambda x: x[1], reverse=True)[:5]
@@ -295,6 +297,47 @@ async def chess_analyze(request_data: AnalyzeRequest):
 
     stats_popularity = get_metric_stats("popularity", user_popularity)
     stats_sharpness = get_metric_stats("sharpness", user_sharpness)
+
+
+    # recommendations
+    num_items = len(ITEM_LE.classes_)
+    u_hist = torch.zeros(num_items).float()
+    for color in ["white", "black"]:
+        for id in opening_result[color]:  
+            item_id = f"{color}_{id}"
+            if item_id in ITEM_LE.classes_:
+                idx = ITEM_LE.transform([item_id])[0]
+                count = opening_result[color][id]["white"] + opening_result[color][id]["draws"] + opening_result[color][id]["black"]
+                win = opening_result[color][id][color] + opening_result[color][id]["draws"]*0.5
+                u_hist[idx] = torch.tensor(np.log1p(count) * ((win / count) + 0.5)).float()
+            
+            for v_id in opening_result[color][id]["variations"]:
+                item_id = f"{color}_{v_id}"
+                if item_id in ITEM_LE.classes_:
+                    idx = ITEM_LE.transform([item_id])[0]
+                    count = opening_result[color][id]["variations"][v_id]["white"] +\
+                            opening_result[color][id]["variations"][v_id]["draws"] +\
+                            opening_result[color][id]["variations"][v_id]["black"]
+                    win = opening_result[color][id]["variations"][v_id][color] + opening_result[color][id]["variations"][v_id]["draws"]*0.5
+                    u_hist[idx] = torch.tensor(np.log1p(count) * ((win / count) + 0.5)).float()
+
+    with torch.no_grad():
+        u_hist_batch = u_hist.repeat(num_items, 1)
+        item_indices = torch.arange(num_items)
+        u_style = torch.tensor([user_popularity, user_sharpness]).float().repeat(num_items, 1)
+        
+        predictions = chess_ncf(u_hist_batch, item_indices, u_style, ITEM_STYLE_TENSOR)
+    
+    top_k = 5
+    top_indices = torch.argsort(predictions, descending=True)[:top_k]
+    recommendations = []
+    for idx in top_indices:
+        item_id = ITEM_LE.inverse_transform([idx.item()])[0]
+        recommendations.append({
+            "opening": item_id,
+            "score": float(predictions[idx])
+        })
+    print(recommendations)
             
     return {
         "total_count": analyzed_count,
@@ -307,5 +350,6 @@ async def chess_analyze(request_data: AnalyzeRequest):
             "popularity": stats_popularity,
             "sharpness": stats_sharpness
         },
-        "opening_result": opening_result
+        "opening_result": opening_result,
+        "recommendations": recommendations
     }

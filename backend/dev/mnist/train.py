@@ -15,7 +15,6 @@ def accuracy(predictions, truth):
 
 
 LR = 0.005
-BATCH_SIZE = 64
 EPOCHS = 10
 PATH = "./backend/models/mnist.pth"
 

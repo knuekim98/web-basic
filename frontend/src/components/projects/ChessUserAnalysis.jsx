@@ -15,6 +15,7 @@ const ChessUserAnalysis = () => {
   const [userData, setUserData] = useState(null);
   const [insight, setInsight] = useState(null);
   const [insightStats, setInsightStats] = useState(null);
+  const [recommendations, setRecommendations] = useState(null);
   const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
@@ -54,6 +55,7 @@ const ChessUserAnalysis = () => {
         setSpeedCount(response.data.speed_count);
         setInsight(response.data.insight);
         setInsightStats(response.data.insight_stats);
+        setRecommendations(response.data.recommendations);
       } catch (error) {
         console.error("Analysis error:", error);
       } finally {
@@ -162,6 +164,75 @@ const ChessUserAnalysis = () => {
           theme="emerald"
           description="남들이 자주 두는 정석(Mainline)을 얼마나 따르는지 나타냅니다."
         />
+      </div>
+
+      <div className="mt-24">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="h-[1px] w-12 bg-emerald-500/50" />
+          <span className="text-emerald-500 font-mono text-[11px] tracking-[0.4em] uppercase font-bold">
+            AI Recommendation
+          </span>
+        </div>
+        
+        <div className="grid grid-cols-1 gap-6">
+          <div className="bg-zinc-900/40 border border-white/5 rounded-[3rem] p-10 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8">
+              <Zap className="text-emerald-500/20" size={120} />
+            </div>
+            
+            <div className="relative z-10">
+              <h4 className="text-3xl font-black text-gray-50 tracking-tighter italic uppercase mb-2">
+                Suggested Repertoire<span className="text-emerald-500">.</span>
+              </h4>
+              <p className="text-zinc-500 text-sm mb-10 max-w-md">
+                당신의 플레이 스타일 DNA와 과거 대국 패턴을 분석하여, 
+                NCF(Neural Collaborative Filtering) 모델이 제안하는 최적의 오프닝입니다.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                {recommendations?.map((rec, idx) => {
+                  const [color, opId] = rec.opening.split('_');
+                  // score를 0~100% 사이의 가독성 좋은 수치로 변환 (모델 출력값에 따라 조정 필요)
+                  const matchRate = Math.min(Math.round(rec.score * 100), 99.9);
+                  
+                  return (
+                    <div key={idx} className="bg-black/40 border border-white/5 p-6 rounded-[2rem] hover:border-emerald-500/30 transition-all group">
+                      <div className="flex flex-col gap-4">
+                        <div className="flex justify-between items-start">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${color === 'white' ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-400'}`}>
+                            {color}
+                          </span>
+                          <span className="text-emerald-500 font-mono text-xs font-black italic">{matchRate}%</span>
+                        </div>
+                        
+                        <div className="h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-emerald-500 transition-all duration-1000" 
+                            style={{ width: `${matchRate}%` }} 
+                          />
+                        </div>
+
+                        <div className="min-h-[60px]">
+                          <p className="text-zinc-200 text-sm font-bold leading-tight group-hover:text-emerald-400 transition-colors">
+                            {/* 실제 서비스 시에는 ID를 이름으로 치환하는 매핑이 필요할 수 있습니다 */}
+                            {rec.opening}
+                          </p>
+                        </div>
+
+                        <button 
+                          onClick={() => window.open(`${window.location.origin}${window.location.pathname}#/chess/opening?id=${opId}&color=${color}`, '_blank')}
+                          className="flex items-center justify-between text-[10px] text-zinc-500 hover:text-white uppercase tracking-widest font-bold mt-2"
+                        >
+                          View Theory <ExternalLink size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div>
