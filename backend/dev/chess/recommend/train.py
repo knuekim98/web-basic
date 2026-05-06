@@ -7,7 +7,7 @@ from dataloader import item_le, train_dataloader
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = ChessNCF(num_items=len(item_le.classes_))
 criterion = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 for epoch in range(20):
     model.train()

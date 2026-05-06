@@ -18,6 +18,7 @@ item_le = LabelEncoder()
 inter_df['user_idx'] = user_le.fit_transform(inter_df['user_id'])
 inter_df['item_id'] = inter_df['color'] + '_' + inter_df['opening_id'].astype(str)
 inter_df['item_idx'] = item_le.fit_transform(inter_df['item_id'])
+inter_df['interaction_score'] = inter_df['interaction_score'] / 0.8 + 0.2
 
 
 # get user / item style tensor

@@ -5,6 +5,7 @@ numpy
 pandas
 python-dotenv
 python-chess
+joblib
 
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch

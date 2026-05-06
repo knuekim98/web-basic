@@ -217,32 +217,27 @@ async def chess_analyze(request_data: AnalyzeRequest):
             ss = stats_white if me == "white" else stats_black
 
             # construct opening_result
-            main_idx = -1
-            for i, opening in enumerate(game["opening"]):
-                if opening["unshow"] != 1: 
-                    main_idx = i
-                    break
-            
-            if main_idx != -1:
-                main_opening = game["opening"][main_idx]
-                main_opening_id = main_opening["id"]
-                if main_opening_id not in opening_result[me]:
-                    opening_result[me][main_opening_id] = {"name": main_opening["name"], "white": 0, "draws": 0, "black": 0, "variations":{}}
-                opening_result[me][main_opening_id][result] += 1
+            valid_ops = [o for o in game["opening"] if o["unshow"] != 1]
+            if valid_ops:
+                main_op = valid_ops[0]
+                main_op_id = main_op["id"]
+                if main_op_id not in opening_result[me]:
+                    opening_result[me][main_op_id] = {"name": main_op["name"], "white": 0, "draws": 0, "black": 0, "variations":{}}
+                opening_result[me][main_op_id][result] += 1
                 
-                for opening in game["opening"][(main_idx+1):]:
+                for opening in valid_ops[1:]:
                     opening_id = opening["id"]
-                    if opening_id not in opening_result[me][main_opening_id]["variations"]:
-                        opening_result[me][main_opening_id]["variations"][opening_id] = {"name": opening["name"], "white": 0, "draws": 0, "black": 0}
-                    opening_result[me][main_opening_id]["variations"][opening_id][result] += 1
+                    if opening_id not in opening_result[me][main_op_id]["variations"]:
+                        opening_result[me][main_op_id]["variations"][opening_id] = {"name": opening["name"], "white": 0, "draws": 0, "black": 0}
+                    opening_result[me][main_op_id]["variations"][opening_id][result] += 1
                     
             # measure popularity
             pop_z = sum((o["popularity"] - ss["popularity_ss"][0]) / ss["popularity_ss"][1] for o in game["opening"]) / len(game["opening"])
             popularity.append(pop_z)
 
             # measure sharpness
-            last_opening = game["opening"][-1]
-            sharp_z = (last_opening["sharpness"] - ss["sharpness_ss"][0]) / ss["sharpness_ss"][1]
+            last_op = game["opening"][-1]
+            sharp_z = (last_op["sharpness"] - ss["sharpness_ss"][0]) / ss["sharpness_ss"][1]
             sharpness.append(sharp_z)
             
         analyzed_count += 1
@@ -303,13 +298,16 @@ async def chess_analyze(request_data: AnalyzeRequest):
     num_items = len(ITEM_LE.classes_)
     u_hist = torch.zeros(num_items).float()
     for color in ["white", "black"]:
+        search_df = df_chess_white if color=="white" else df_chess_black 
         for id in opening_result[color]:  
+
             item_id = f"{color}_{id}"
             if item_id in ITEM_LE.classes_:
                 idx = ITEM_LE.transform([item_id])[0]
                 count = opening_result[color][id]["white"] + opening_result[color][id]["draws"] + opening_result[color][id]["black"]
                 win = opening_result[color][id][color] + opening_result[color][id]["draws"]*0.5
-                u_hist[idx] = torch.tensor(np.log1p(count) * ((win / count) + 0.5)).float()
+                opening = search_df[search_df["id"] == id].iloc[0].to_dict()
+                u_hist[idx] = torch.tensor(np.log1p(count / (opening["selection_rate"] + 0.0001)) * ((win / count) + 0.5)).float()
             
             for v_id in opening_result[color][id]["variations"]:
                 item_id = f"{color}_{v_id}"
@@ -319,9 +317,13 @@ async def chess_analyze(request_data: AnalyzeRequest):
                             opening_result[color][id]["variations"][v_id]["draws"] +\
                             opening_result[color][id]["variations"][v_id]["black"]
                     win = opening_result[color][id]["variations"][v_id][color] + opening_result[color][id]["variations"][v_id]["draws"]*0.5
-                    u_hist[idx] = torch.tensor(np.log1p(count) * ((win / count) + 0.5)).float()
+                    opening = search_df[search_df["id"] == v_id].iloc[0].to_dict()
+                    u_hist[idx] = torch.tensor(np.log1p(count / (opening["selection_rate"] + 0.0001)) * ((win / count) + 0.5)).float()
 
     with torch.no_grad():
+        u_hist[u_hist > 0] += 0.2
+        u_hist = u_hist / u_hist.max()
+        print(u_hist)
         u_hist_batch = u_hist.repeat(num_items, 1)
         item_indices = torch.arange(num_items)
         u_style = torch.tensor([user_popularity, user_sharpness]).float().repeat(num_items, 1)

@@ -32,7 +32,7 @@ with open("./backend/db/chess/stats_black.json", "r") as f:
 
 
 def get_high_rated_users(seed_username, min_rating=2000):
-    url = f"https://lichess.org/api/games/user/{seed_username}?max=200&perfType=bullet,blitz,rapid,classical"
+    url = f"https://lichess.org/api/games/user/{seed_username}?max=300&perfType=blitz,rapid,classical"
     res = get_data(url)
     
     users = set()
@@ -47,7 +47,7 @@ def get_high_rated_users(seed_username, min_rating=2000):
 
 
 def analyze_user_for_dataset(username, max_games=200):
-    url = f"https://lichess.org/api/games/user/{username}?max={max_games}&rated=true"
+    url = f"https://lichess.org/api/games/user/{username}?max={max_games}&rated=true&perfType=blitz,rapid,classical"
     res = get_data(url)
     
     opening_stats = {"white": {}, "black": {}}
@@ -84,7 +84,7 @@ def analyze_user_for_dataset(username, max_games=200):
             valid_ops = [o for o in found_openings if o["unshow"] != 1]
             if valid_ops:
                 main_op = valid_ops[0]
-                op_id = int(main_op["id"])
+                op_id = main_op["id"]
                 
                 # Popularity Z-score
                 pop_z = sum((o["popularity"] - ss["popularity_ss"][0]) / ss["popularity_ss"][1] for o in found_openings) / len(found_openings)
@@ -143,15 +143,17 @@ def collect_ncf_dataset(seed_users, target_count):
 
                 # interactions.csv
                 for color in ["white", "black"]:
+                    search_df = df_white if color=="white" else df_black
                     for op_id, opt in stats[color].items():
 
                         if opt["count"] >= 3:
                             win_rate = opt["score_sum"] / opt["count"]
-                            score = np.log1p(opt["count"]) * (win_rate + 0.5)
+                            opening = search_df[search_df["id"] == op_id].iloc[0].to_dict()
+                            score = np.log1p(opt["count"] / (opening["selection_rate"] + 0.0001)) * (win_rate + 0.5)
                             
                             interactions.append({
                                 "user_id": username,
-                                "opening_id": int(op_id),
+                                "opening_id": op_id,
                                 "color": color,
                                 "play_count": opt["count"],
                                 "win_rate": win_rate,
@@ -167,6 +169,7 @@ def collect_ncf_dataset(seed_users, target_count):
 
     df_u = pd.DataFrame(user_features)
     df_i = pd.DataFrame(interactions)
+    df_i['interaction_score'] = df_i.groupby('user_id')['interaction_score'].transform(lambda x: x / x.max())
     
     df_u.to_csv("./backend/datasets/chess/user_features.csv", index=False)
     df_i.to_csv("./backend/datasets/chess/interactions.csv", index=False)

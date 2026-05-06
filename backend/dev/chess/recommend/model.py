@@ -7,6 +7,7 @@ class ChessNCF(nn.Module):
 
         self.user_encoder = nn.Sequential(
             nn.Linear(num_items, 128),
+            nn.BatchNorm1d(128),
             nn.ReLU(),
             nn.Linear(128, factor_num)
         )
@@ -18,13 +19,15 @@ class ChessNCF(nn.Module):
         self.mlp_layers = nn.Sequential(
             nn.Linear(mlp_input_dim, 64),
             nn.ReLU(),
-            nn.Linear(64, 32),
+            nn.Linear(64, 16),
             nn.ReLU(),
-            nn.Linear(32, 1)
         )
+        self.prediction_layer = nn.Linear(factor_num + 16, 1)
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, user_hist, item_indices, user_style, item_style):
         u_latent = self.user_encoder(user_hist)
+        #print(u_latent)
 
         i_gmf = self.embed_item_GMF(item_indices)
         i_mlp = self.embed_item_MLP(item_indices)
@@ -37,5 +40,6 @@ class ChessNCF(nn.Module):
         mlp_output = self.mlp_layers(mlp_input)
         
         # concat
-        prediction = gmf_output.sum(dim=-1, keepdim=True) + mlp_output
-        return prediction.view(-1)
+        combined = torch.cat([gmf_output, mlp_output], dim=-1)
+        prediction = self.prediction_layer(combined)
+        return self.sigmoid(prediction).view(-1)
