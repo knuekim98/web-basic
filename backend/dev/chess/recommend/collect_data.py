@@ -148,8 +148,8 @@ def collect_ncf_dataset(seed_users, target_count):
 
                         if opt["count"] >= 3:
                             win_rate = opt["score_sum"] / opt["count"]
-                            opening = search_df[search_df["id"] == op_id].iloc[0].to_dict()
-                            score = np.log1p(opt["count"] / (opening["selection_rate"] + 0.0001)) * (win_rate + 0.5)
+                            sr = search_df[search_df["id"] == op_id].iloc[0]["selection_rate"]
+                            score = np.log1p(opt["count"] / (sr + 0.0001)) * (win_rate + 0.5)
                             
                             interactions.append({
                                 "user_id": username,

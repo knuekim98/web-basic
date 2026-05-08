@@ -135,7 +135,7 @@ async def chess_opening(opening_id: int = Body(...), color: str = Body(default="
             "moves": str(row["moves"])
         })
     
-    descendants = df[df['moves'].apply(lambda x: x.startswith(m) and x != m)].to_dict('records')
+    descendants = df[df['moves'].apply(lambda x: x.startswith(m) and x != m)].sort_values(by='games', ascending=False).to_dict('records')
     children = []
     for desc in descendants:
         is_direct = True
@@ -294,7 +294,7 @@ async def chess_analyze(request_data: AnalyzeRequest):
     stats_sharpness = get_metric_stats("sharpness", user_sharpness)
 
 
-    # recommendations
+    # --- recommendations ---
     num_items = len(ITEM_LE.classes_)
     u_hist = torch.zeros(num_items).float()
     for color in ["white", "black"]:
@@ -306,8 +306,8 @@ async def chess_analyze(request_data: AnalyzeRequest):
                 idx = ITEM_LE.transform([item_id])[0]
                 count = opening_result[color][id]["white"] + opening_result[color][id]["draws"] + opening_result[color][id]["black"]
                 win = opening_result[color][id][color] + opening_result[color][id]["draws"]*0.5
-                opening = search_df[search_df["id"] == id].iloc[0].to_dict()
-                u_hist[idx] = torch.tensor(np.log1p(count / (opening["selection_rate"] + 0.0001)) * ((win / count) + 0.5)).float()
+                sr = search_df[search_df["id"] == id].iloc[0]["selection_rate"]
+                u_hist[idx] = torch.tensor(np.log1p(count / (sr + 0.0001)) * ((win / count) + 0.5)).float()
             
             for v_id in opening_result[color][id]["variations"]:
                 item_id = f"{color}_{v_id}"
@@ -317,30 +317,111 @@ async def chess_analyze(request_data: AnalyzeRequest):
                             opening_result[color][id]["variations"][v_id]["draws"] +\
                             opening_result[color][id]["variations"][v_id]["black"]
                     win = opening_result[color][id]["variations"][v_id][color] + opening_result[color][id]["variations"][v_id]["draws"]*0.5
-                    opening = search_df[search_df["id"] == v_id].iloc[0].to_dict()
-                    u_hist[idx] = torch.tensor(np.log1p(count / (opening["selection_rate"] + 0.0001)) * ((win / count) + 0.5)).float()
-
-    with torch.no_grad():
-        u_hist[u_hist > 0] += 0.2
-        u_hist = u_hist / u_hist.max()
-        print(u_hist)
-        u_hist_batch = u_hist.repeat(num_items, 1)
-        item_indices = torch.arange(num_items)
-        u_style = torch.tensor([user_popularity, user_sharpness]).float().repeat(num_items, 1)
-        
-        predictions = chess_ncf(u_hist_batch, item_indices, u_style, ITEM_STYLE_TENSOR)
+                    sr = search_df[search_df["id"] == v_id].iloc[0]["selection_rate"]
+                    u_hist[idx] = torch.tensor(np.log1p(count / (sr + 0.0001)) * ((win / count) + 0.5)).float()
     
-    top_k = 5
-    top_indices = torch.argsort(predictions, descending=True)[:top_k]
-    recommendations = []
-    for idx in top_indices:
-        item_id = ITEM_LE.inverse_transform([idx.item()])[0]
-        recommendations.append({
-            "opening": item_id,
-            "score": float(predictions[idx])
-        })
-    print(recommendations)
+    u_hist = u_hist / u_hist.max() * 0.8
+    u_hist[u_hist > 0] += 0.2
+
+    # get used_counts
+    used_counts = {"white":{}, "black":{}}
+    for color in ["white", "black"]:
+        for id, stats in opening_result[color].items():
+            item_id = f"{color}_{id}"
+            count = stats["white"] + stats["draws"] + stats["black"]
+            used_counts[color][item_id] = used_counts[color].get(item_id, 0) + count
             
+            for v_id, v_stats in stats["variations"].items():
+                v_item_id = f"{color}_{v_id}"
+                v_count = v_stats["white"] + v_stats["draws"] + v_stats["black"]
+                used_counts[color][v_item_id] = used_counts[color].get(v_item_id, 0) + v_count
+
+    # white first move
+    white_starts = {"e4": 0, "d4": 0}
+    total_white_games = 0
+    for item_id, count in used_counts["white"].items():
+        _, op_id = item_id.split('_')
+        op_id = int(op_id)
+        op_info = df_chess_white[df_chess_white["id"] == op_id].iloc[0]
+
+        if op_info["moves"].startswith("1.e4"): white_starts["e4"] += count
+        elif op_info["moves"].startswith("1.d4"): white_starts["d4"] += count
+        total_white_games += count
+
+    active_white_starts = [move for move, cnt in white_starts.items() if (cnt / (total_white_games + 1e-9)) >= 0.1]
+    
+
+    def get_candidates(color, start_move=None, excluded=False):
+        df = df_chess_white if color == "white" else df_chess_black
+        mask = pd.Series(True, index=df.index)
+        
+        if start_move:
+            mask = df["moves"].str.contains(f"^1.{start_move}")
+        if excluded:
+            mask = ~mask
+            
+        candidate_list = []
+        for _, row in df[mask].iterrows():
+            item_id = f"{color}_{row['id']}"
+            if item_id not in set(ITEM_LE.classes_) : continue
+            if used_counts.get(item_id, 0) >= 10: continue
+            candidate_list.append(item_id)
+
+        return candidate_list
+
+
+    # select targets (white/black)
+    white_targets = []
+    if active_white_starts:
+        for start in active_white_starts:
+            white_targets.append((f"Best for {start}", get_candidates("white", start)))
+
+            if len(active_white_starts) == 1:
+                white_targets.append(("Other Openings", get_candidates("white", start, excluded=True)))
+    else:
+        white_targets.append(("General Openings", get_candidates("white")))
+
+    black_targets = [
+        ("Against e4", get_candidates("black", "e4")),
+        ("Against d4", get_candidates("black", "d4")),
+        ("Against c4", get_candidates("black", "c4"))
+    ]
+
+    # model inference
+    def rank_candidates(target_list):
+        if not target_list: return []
+        item_indices = torch.tensor(ITEM_LE.transform(target_list))
+        u_hist_batch = u_hist.repeat(len(target_list), 1)
+        u_style_batch = torch.tensor([user_popularity, user_sharpness]).float().repeat(len(target_list), 1)
+        i_style_batch = ITEM_STYLE_TENSOR[item_indices]
+        
+        with torch.no_grad():
+            preds = chess_ncf(u_hist_batch, item_indices, u_style_batch, i_style_batch)
+        
+        # select top 5
+        top_idx = torch.argsort(preds, descending=True)[:5]
+        res = []
+        for i in top_idx:
+            full_id = target_list[i.item()]
+            c, op_id = full_id.split('_')
+            op_id = int(op_id)
+            db = df_chess_white if c == "white" else df_chess_black
+            op_info = db[db["id"] == op_id].iloc[0]
+            res.append({
+                "id": op_id,
+                "name": op_info["name"],
+                "moves": op_info["moves"],
+                "score": float(preds[i]),
+                "color": c
+            })
+        return res
+
+    recommendations = {"white": [], "black": []}
+    for label, candidates in white_targets:
+        recommendations["white"].append({"label": label, "items": rank_candidates(candidates)})
+    for label, candidates in black_targets:
+        recommendations["black"].append({"label": label, "items": rank_candidates(candidates)})
+
     return {
         "total_count": analyzed_count,
         "speed_count": speed_count,
