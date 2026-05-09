@@ -8,7 +8,6 @@ import torch.nn.functional as F
 from PIL import Image
 from fastapi import FastAPI, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.encoders import jsonable_encoder
 from typing import List, Union
 from pydantic import BaseModel
 import chess

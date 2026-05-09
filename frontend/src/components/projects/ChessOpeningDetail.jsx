@@ -344,15 +344,15 @@ const ChessOpeningDetail = () => {
               <div className="flex justify-between font-mono text-sm font-bold">
                 {color === 'white' ? (
                   <>
-                    <span className="text-white">WHITE {opening.white_rate.toFixed(1)}%</span>
-                    <span className="text-zinc-400">DRAW {opening.draws_rate.toFixed(1)}%</span>
-                    <span className="text-zinc-500">BLACK {opening.black_rate.toFixed(1)}%</span>
+                    <span className="text-white">WHITE {(opening?.white_rate || 0).toFixed(1)}%</span>
+                    <span className="text-zinc-400">DRAW {(opening?.draws_rate || 0).toFixed(1)}%</span>
+                    <span className="text-zinc-500">BLACK {(opening?.black_rate || 0).toFixed(1)}%</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-zinc-500">BLACK {opening.black_rate.toFixed(1)}%</span>
-                    <span className="text-zinc-400">DRAW {opening.draws_rate.toFixed(1)}%</span>
-                    <span className="text-white">WHITE {opening.white_rate.toFixed(1)}%</span>
+                    <span className="text-zinc-500">BLACK {(opening?.black_rate || 0).toFixed(1)}%</span>
+                    <span className="text-zinc-400">DRAW {(opening?.draws_rate || 0).toFixed(1)}%</span>
+                    <span className="text-white">WHITE {(opening?.white_rate || 0).toFixed(1)}%</span>
                   </>
                 )}
               </div>
