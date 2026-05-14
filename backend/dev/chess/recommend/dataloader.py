@@ -1,11 +1,11 @@
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
 import joblib
 
 import torch
-from torch.utils.data import Dataset
-from torch.utils.data import DataLoader
+from torch.utils.data import Dataset, DataLoader
 
 df_white = pd.read_csv("./backend/db/chess/db_white_processed.csv")
 df_black = pd.read_csv("./backend/db/chess/db_black_processed.csv")
@@ -58,7 +58,8 @@ def get_negative_samples(inter_df, n_neg=4):
     return pd.DataFrame(neg_data, columns=['user_idx', 'item_idx', 'interaction_score'])
 
 neg_df = get_negative_samples(inter_df)
-train_df = pd.concat([inter_df[['user_idx', 'item_idx', 'interaction_score']], neg_df], ignore_index=True)
+full_df = pd.concat([inter_df[['user_idx', 'item_idx', 'interaction_score']], neg_df], ignore_index=True)
+user_item_matrix = inter_df.pivot(index='user_idx', columns='item_idx', values='interaction_score').fillna(0)
 
 class ChessDataset(Dataset):
     def __init__(self, df, user_item_matrix, user_style, item_style):
@@ -79,7 +80,16 @@ class ChessDataset(Dataset):
 
         return u_hist, i_idx, self.user_style[u_idx], self.item_style[i_idx], y
     
-user_item_matrix = inter_df.pivot(index='user_idx', columns='item_idx', values='interaction_score').fillna(0)
-train_dataloader = DataLoader(ChessDataset(train_df, user_item_matrix, user_style_tensor, item_style_tensor), batch_size=64, shuffle=True)
+train_df, val_df = train_test_split(full_df, test_size=0.2, random_state=42)
+train_dataloader = DataLoader(
+    ChessDataset(train_df, user_item_matrix, user_style_tensor, item_style_tensor), 
+    batch_size=64, shuffle=True
+)
+
+val_dataloader = DataLoader(
+    ChessDataset(val_df, user_item_matrix, user_style_tensor, item_style_tensor), 
+    batch_size=64, shuffle=False
+)
+
 joblib.dump(item_le, "./backend/db/chess/item_le.pkl")
 torch.save(item_style_tensor, "./backend/db/chess/item_style_tensor.pt")
